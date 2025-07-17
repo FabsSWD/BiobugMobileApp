@@ -19,11 +19,6 @@ class SignatureControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Stroke Width Slider (Optional feature)
-        _buildStrokeWidthSlider(),
-        
-        const SizedBox(height: 16),
-        
         // Action Buttons
         Row(
           children: [
@@ -36,6 +31,7 @@ class SignatureControls extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.warning,
                   side: const BorderSide(color: AppColors.warning),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ),
@@ -51,6 +47,7 @@ class SignatureControls extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.error,
                   side: const BorderSide(color: AppColors.error),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ),
@@ -67,63 +64,13 @@ class SignatureControls extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.success,
                   foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildStrokeWidthSlider() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.grey50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.grey200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Grosor del trazo',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.grey700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.remove,
-                size: 16,
-                color: AppColors.grey500,
-              ),
-              Expanded(
-                child: Slider(
-                  value: 2.0, // Default stroke width
-                  min: 1.0,
-                  max: 8.0,
-                  divisions: 7,
-                  activeColor: AppColors.primary,
-                  onChanged: isEnabled ? (value) {
-                    // TODO: Implement stroke width change
-                  } : null,
-                ),
-              ),
-              Icon(
-                Icons.add,
-                size: 16,
-                color: AppColors.grey500,
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

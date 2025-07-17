@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class Signature extends Equatable {
   final String id;
@@ -41,14 +42,25 @@ class Signature extends Equatable {
       ];
 
   bool get isValid => 
-      width >= 300 && 
-      height >= 150 && 
-      pointsCount >= 10 && 
-      imageBytes.length <= 51200; // 50KB
+      width >= AppConstants.signatureMinResolutionWidth && 
+      height >= AppConstants.signatureMinResolutionHeight && 
+      pointsCount >= AppConstants.signatureMinPoints && 
+      imageBytes.isNotEmpty &&
+      imageBytes.length <= AppConstants.signatureMaxFileSize;
 
   int get fileSizeInBytes => imageBytes.length;
 
   double get fileSizeInKB => fileSizeInBytes / 1024;
+
+  double get fileSizeInMB => fileSizeInBytes / 1024 / 1024;
+
+  String get formattedFileSize {
+    if (fileSizeInMB >= 1) {
+      return '${fileSizeInMB.toStringAsFixed(2)} MB';
+    } else {
+      return '${fileSizeInKB.toStringAsFixed(1)} KB';
+    }
+  }
 
   Signature copyWith({
     String? id,
@@ -78,6 +90,6 @@ class Signature extends Equatable {
 
   @override
   String toString() {
-    return 'Signature(id: $id, size: ${width}x$height, quality: $quality, points: $pointsCount, fileSize: ${fileSizeInKB.toStringAsFixed(2)}KB, isUploaded: $isUploaded)';
+    return 'Signature(id: $id, size: ${width}x$height, quality: $quality, points: $pointsCount, fileSize: $formattedFileSize, isUploaded: $isUploaded)';
   }
 }

@@ -1,11 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:encrypt/encrypt.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
-// ignore: unused_import
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/utils/file_utils.dart';
@@ -26,10 +23,6 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
   final LocalStorage _localStorage;
   // ignore: unused_field
   final _uuid = const Uuid();
-  
-  // Encryption setup
-  final _key = Key.fromSecureRandom(32);
-  late final _encrypter = Encrypter(AES(_key));
   
   static const String _signaturesKey = 'saved_signatures';
 
@@ -73,10 +66,11 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
   Future<void> deleteSignature(String id) async {
     try {
       final signatures = await getSavedSignatures();
-      final signatureToDelete = signatures.firstWhere(
-        (s) => s.id == id,
-        orElse: () => throw CacheException('Firma no encontrada'),
-      );
+      final signatureToDelete = signatures.where((s) => s.id == id).firstOrNull;
+      
+      if (signatureToDelete == null) {
+        throw CacheException('Firma no encontrada');
+      }
       
       // Delete file if exists
       if (signatureToDelete.filePath != null) {
@@ -98,10 +92,7 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
   Future<SignatureModel?> getSignatureById(String id) async {
     try {
       final signatures = await getSavedSignatures();
-      return signatures.firstWhere(
-        (s) => s.id == id,
-        orElse: () => throw CacheException('Firma no encontrada'),
-      );
+      return signatures.where((s) => s.id == id).firstOrNull;
     } catch (e) {
       return null;
     }
@@ -112,13 +103,10 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
     try {
       final signaturesDir = await FileUtils.getSignaturesDirectory();
       
-      // Encrypt the image bytes
-      final encrypted = _encrypter.encryptBytes(imageBytes);
-      
-      // Save encrypted file
+      // Save file directly without encryption (for simplicity)
       final filePath = '$signaturesDir/$fileName';
       final file = File(filePath);
-      await file.writeAsBytes(encrypted.bytes);
+      await file.writeAsBytes(imageBytes);
       
       return filePath;
     } catch (e) {
@@ -134,11 +122,7 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
         throw CacheException('Archivo de firma no encontrado');
       }
       
-      final encryptedBytes = await file.readAsBytes();
-      final encrypted = Encrypted(encryptedBytes);
-      
-      // Decrypt the image bytes
-      return Uint8List.fromList(_encrypter.decryptBytes(encrypted));
+      return await file.readAsBytes();
     } catch (e) {
       throw CacheException('Error al leer archivo de firma: $e');
     }

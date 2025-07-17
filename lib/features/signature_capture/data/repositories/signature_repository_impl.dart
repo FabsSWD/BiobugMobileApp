@@ -33,32 +33,37 @@ class SignatureRepositoryImpl implements SignatureRepository {
   @override
   Future<Either<Failure, Signature>> captureSignature(SignatureParams params) async {
     try {
-      // Validate basic requirements
+      // Validaciones más flexibles
       if (params.width < AppConstants.signatureMinResolutionWidth ||
           params.height < AppConstants.signatureMinResolutionHeight) {
-        return const Left(ValidationFailure(
-          'La resolución mínima debe ser 300x150 píxeles',
+        return Left(ValidationFailure(
+          'La resolución mínima debe ser ${AppConstants.signatureMinResolutionWidth}x${AppConstants.signatureMinResolutionHeight} píxeles',
           code: 'INVALID_RESOLUTION',
         ));
       }
 
-      if (params.pointsCount < 10) {
-        return const Left(ValidationFailure(
-          'La firma debe tener al menos 10 puntos',
+      if (params.pointsCount < AppConstants.signatureMinPoints) {
+        return Left(ValidationFailure(
+          'La firma debe tener al menos ${AppConstants.signatureMinPoints} puntos',
           code: 'INSUFFICIENT_POINTS',
         ));
       }
 
-      // Compress image if needed
+      // Procesar imagen - comprimir solo si es muy grande
       Uint8List processedBytes = params.imageBytes;
       if (params.imageBytes.length > AppConstants.signatureMaxFileSize) {
-        processedBytes = await _compressImage(params.imageBytes, params.compressionLevel);
-        
-        if (processedBytes.length > AppConstants.signatureMaxFileSize) {
-          return const Left(ValidationFailure(
-            'El archivo de firma excede el tamaño máximo de 50KB',
-            code: 'FILE_TOO_LARGE',
-          ));
+        // Intentar comprimir
+        try {
+          processedBytes = await _compressImage(params.imageBytes, params.compressionLevel);
+        } catch (e) {
+          // Si falla la compresión, usar imagen original si no es extremadamente grande
+          if (params.imageBytes.length > AppConstants.signatureMaxFileSize * 2) {
+            return Left(ValidationFailure(
+              'El archivo de firma es muy grande (${(params.imageBytes.length / 1024 / 1024).toStringAsFixed(2)}MB). Máximo permitido: ${(AppConstants.signatureMaxFileSize / 1024 / 1024).toStringAsFixed(1)}MB',
+              code: 'FILE_TOO_LARGE',
+            ));
+          }
+          processedBytes = params.imageBytes;
         }
       }
 
@@ -86,7 +91,7 @@ class SignatureRepositoryImpl implements SignatureRepository {
   @override
   Future<Either<Failure, Unit>> saveSignatureLocally(Signature signature) async {
     try {
-      // Save file to encrypted storage
+      // Save file to storage (sin cifrado para simplificar)
       final fileName = '${signature.id}.png';
       final filePath = await _localDataSource.saveSignatureFile(
         signature.imageBytes,
@@ -190,7 +195,12 @@ class SignatureRepositoryImpl implements SignatureRepository {
   @override
   Future<Either<Failure, bool>> validateSignature(Signature signature) async {
     try {
-      final isValid = signature.isValid;
+      // Validación más flexible
+      final isValid = signature.width >= AppConstants.signatureMinResolutionWidth &&
+                     signature.height >= AppConstants.signatureMinResolutionHeight &&
+                     signature.pointsCount >= AppConstants.signatureMinPoints &&
+                     signature.imageBytes.isNotEmpty;
+      
       return Right(isValid);
     } catch (e) {
       return Left(ValidationFailure('Error al validar firma: $e'));

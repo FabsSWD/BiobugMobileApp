@@ -47,51 +47,17 @@ class ApiClient {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          // Token expired, try to refresh
-          final refreshed = await _refreshToken();
-          if (refreshed) {
-            // Retry original request
-            final token = await _secureStorage.getAccessToken();
-            error.requestOptions.headers[ApiConstants.authorization] = 
-                '${ApiConstants.bearer} $token';
-            
-            try {
-              final response = await _dio.fetch(error.requestOptions);
-              return handler.resolve(response);
-            } catch (e) {
-              // If retry fails, continue with original error
-            }
-          }
+          // Token expired, clear auth data and let user login again
+          // Since backend doesn't provide refresh token endpoint yet
+          await _secureStorage.clearTokens();
         }
         handler.next(error);
       },
     ));
   }
 
-  Future<bool> _refreshToken() async {
-    try {
-      final refreshToken = await _secureStorage.getRefreshToken();
-      if (refreshToken == null) return false;
-
-      final response = await _dio.post('/auth/refresh', data: {
-        'refreshToken': refreshToken,
-      });
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        await _secureStorage.saveTokens(
-          accessToken: data['token'],
-          refreshToken: data['tokenRefresh'],
-          expirationTime: data['tokenExpiration'],
-        );
-        return true;
-      }
-    } catch (e) {
-      // Refresh failed, user needs to login again
-      await _secureStorage.clearTokens();
-    }
-    return false;
-  }
+  // Remove refresh token method since backend doesn't support it yet
+  // Future<bool> _refreshToken() async { ... } - REMOVED
 
   Future<Response<T>> get<T>(
     String path, {

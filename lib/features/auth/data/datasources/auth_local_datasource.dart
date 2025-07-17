@@ -24,10 +24,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> cacheAuthResult(AuthResultModel authResult) async {
     try {
-      // Save tokens
+      // Save tokens - UPDATED to handle single token
       await _secureStorage.saveTokens(
         accessToken: authResult.accessToken,
-        refreshToken: authResult.refreshTokenValue,
+        refreshToken: authResult.accessToken, // Use same token
         expirationTime: authResult.expirationTime,
       );
 

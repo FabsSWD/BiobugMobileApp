@@ -9,9 +9,6 @@ class AuthResultModel extends AuthResult {
   @JsonKey(name: 'token')
   final String accessToken;
   
-  @JsonKey(name: 'tokenRefresh')
-  final String refreshTokenValue;
-  
   @JsonKey(name: 'tokenExpiration')
   final int expirationTime;
   
@@ -20,12 +17,11 @@ class AuthResultModel extends AuthResult {
 
   const AuthResultModel({
     required this.accessToken,
-    required this.refreshTokenValue,
     required this.expirationTime,
     required this.userModel,
   }) : super(
           token: accessToken,
-          refreshToken: refreshTokenValue,
+          refreshToken: accessToken, // Use same token as refresh for now
           tokenExpiration: expirationTime,
           user: userModel,
         );
@@ -38,7 +34,7 @@ class AuthResultModel extends AuthResult {
   AuthResult toEntity() {
     return AuthResult(
       token: accessToken,
-      refreshToken: refreshTokenValue,
+      refreshToken: accessToken, // Use same token as refresh for now
       tokenExpiration: expirationTime,
       user: userModel.toEntity(),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/themes/app_colors.dart';
 
 class SignatureValidationInfo extends StatelessWidget {
@@ -26,7 +27,7 @@ class SignatureValidationInfo extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Requisitos de la Firma',
+                'Instrucciones para la Firma',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppColors.info,
@@ -37,10 +38,11 @@ class SignatureValidationInfo extends StatelessWidget {
           
           const SizedBox(height: 8),
           
-          _buildRequirementRow('Resolución mínima: 300x150 píxeles'),
-          _buildRequirementRow('Tamaño máximo: 50KB'),
-          _buildRequirementRow('Mínimo 10 puntos de trazo'),
+          _buildRequirementRow('Resolución mínima: ${AppConstants.signatureMinResolutionWidth}x${AppConstants.signatureMinResolutionHeight} píxeles'),
+          _buildRequirementRow('Tamaño máximo: ${(AppConstants.signatureMaxFileSize / 1024 / 1024).toStringAsFixed(1)}MB'),
+          _buildRequirementRow('Mínimo ${AppConstants.signatureMinPoints} puntos de trazo'),
           _buildRequirementRow('Use un trazo claro y continuo'),
+          _buildRequirementRow('Evite levantar el dedo/mouse durante el trazo'),
         ],
       ),
     );

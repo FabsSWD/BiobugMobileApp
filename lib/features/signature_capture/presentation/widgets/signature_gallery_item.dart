@@ -65,7 +65,7 @@ class SignatureGalleryItem extends StatelessWidget {
                     const SizedBox(height: 4),
                     
                     Text(
-                      '${signature.width}x${signature.height} • ${signature.fileSizeInKB.toStringAsFixed(1)}KB',
+                      '${signature.width}x${signature.height} • ${signature.formattedFileSize}',
                       style: TextStyle(
                         color: AppColors.grey600,
                         fontSize: 12,

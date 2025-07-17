@@ -32,7 +32,8 @@ class SignatureCapturePage extends StatelessWidget {
     final args = ModalRoute.of(context)?.settings.arguments as SignatureCapturePageArguments?;
     
     return BlocProvider(
-      create: (context) => getIt<SignatureBloc>()..add(SignatureCaptureStarted()),
+      // CAMBIO: No disparar evento automáticamente
+      create: (context) => getIt<SignatureBloc>(),
       child: SignatureCaptureView(
         autoSave: args?.autoSave ?? true,
         autoUpload: args?.autoUpload ?? false,
@@ -102,9 +103,10 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
         body: SafeArea(
           child: BlocBuilder<SignatureBloc, SignatureState>(
             builder: (context, state) {
-              if (state is SignatureCapturing) {
+              // CAMBIO: Manejar mejor los estados
+              if (state is SignatureCapturing || state is SignatureValidating) {
                 return const Center(
-                  child: LoadingWidget(message: 'Inicializando captura...'),
+                  child: LoadingWidget(message: 'Procesando firma...'),
                 );
               }
 
@@ -112,6 +114,7 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
                 return _buildPreviewSection(state.signature, state.isValid);
               }
 
+              // Por defecto, mostrar la sección de captura
               return _buildCaptureSection();
             },
           ),
@@ -141,9 +144,10 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
               child: SignatureCanvas(
                 key: _canvasKey,
                 onSignatureChanged: (pointsCount) {
-                  context.read<SignatureBloc>().add(
-                    SignatureCaptureStarted(),
-                  );
+                  // CAMBIO: No disparar evento aquí, solo actualizar UI si es necesario
+                  setState(() {
+                    // Podrías actualizar algún estado local aquí si lo necesitas
+                  });
                 },
               ),
             ),
@@ -218,6 +222,13 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
     final signatureData = await _canvasKey.currentState?.exportSignature();
     if (signatureData != null) {
       context.read<SignatureBloc>().add(SignatureCaptureCompleted(signatureData));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, dibuje una firma antes de guardar'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
     }
   }
 

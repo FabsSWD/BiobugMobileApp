@@ -44,7 +44,9 @@ class SignatureBloc extends Bloc<SignatureEvent, SignatureState> {
     SignatureCaptureStarted event,
     Emitter<SignatureState> emit,
   ) async {
-    emit(SignatureCapturing());
+    // Ya no necesario - el estado inicial ya está listo
+    // Solo emitir si necesitas hacer alguna inicialización específica
+    emit(SignatureInitial());
   }
 
   Future<void> _onCaptureCompleted(

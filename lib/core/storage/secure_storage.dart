@@ -14,19 +14,26 @@ class SecureStorage {
     ),
   );
 
-  // Token Management
+  // Token Management - UPDATED for single token system
   Future<void> saveTokens({
     required String accessToken,
-    required String refreshToken,
+    String? refreshToken, // Made optional since backend doesn't provide it
     required int expirationTime,
   }) async {
     try {
+      // Calculate actual expiration timestamp
+      final currentTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final expirationTimestamp = currentTime + expirationTime;
+      
       await Future.wait([
         _storage.write(key: StorageConstants.accessToken, value: accessToken),
-        _storage.write(key: StorageConstants.refreshToken, value: refreshToken),
+        _storage.write(
+          key: StorageConstants.refreshToken, 
+          value: refreshToken ?? accessToken, // Use same token if no refresh token
+        ),
         _storage.write(
           key: StorageConstants.tokenExpiration,
-          value: expirationTime.toString(),
+          value: expirationTimestamp.toString(),
         ),
       ]);
     } catch (e) {

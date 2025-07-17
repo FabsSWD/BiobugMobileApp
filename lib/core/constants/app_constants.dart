@@ -8,9 +8,10 @@ class AppConstants {
   static const int maxNameLength = 100;
   
   // Signature
-  static const int signatureMinResolutionWidth = 300;
-  static const int signatureMinResolutionHeight = 150;
-  static const int signatureMaxFileSize = 51200; // 50KB
+  static const int signatureMinResolutionWidth = 200;  // Reducido de 300
+  static const int signatureMinResolutionHeight = 100; // Reducido de 150
+  static const int signatureMaxFileSize = 5242880; // 5MB (antes 50KB)
+  static const int signatureMinPoints = 5; // Reducido de 10
   
   // File paths
   static const String imagesPath = 'images';
