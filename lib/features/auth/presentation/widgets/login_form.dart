@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/error/failures.dart';
 import '../../domain/entities/login_params.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -17,6 +18,7 @@ class _LoginFormState extends State<LoginForm> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _lastError;
 
   @override
   void dispose() {
@@ -30,14 +32,17 @@ class _LoginFormState extends State<LoginForm> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.failure.message),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            _lastError = state.failure.message;
+          });
+          
+          _showErrorSnackBar(context, state.failure);
         } else if (state is AuthAuthenticated) {
           Navigator.pushReplacementNamed(context, '/home');
+        } else if (state is AuthLoading) {
+          setState(() {
+            _lastError = null;
+          });
         }
       },
       child: Form(
@@ -45,6 +50,37 @@ class _LoginFormState extends State<LoginForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Error Message Display
+            if (_lastError != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _lastError!,
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
             // Username Field
             TextFormField(
               controller: _usernameController,
@@ -58,12 +94,30 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade50,
+                errorMaxLines: 2,
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'El email o cédula es requerido';
                 }
+                
+                // Validar formato si parece ser un email
+                if (value.contains('@')) {
+                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                  if (!emailRegex.hasMatch(value)) {
+                    return 'Ingresa un email válido';
+                  }
+                }
+                
                 return null;
+              },
+              onChanged: (value) {
+                // Limpiar error cuando el usuario empiece a escribir
+                if (_lastError != null) {
+                  setState(() {
+                    _lastError = null;
+                  });
+                }
               },
             ),
             
@@ -92,12 +146,30 @@ class _LoginFormState extends State<LoginForm> {
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade50,
+                errorMaxLines: 2,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'La contraseña es requerida';
                 }
+                if (value.length < 3) {
+                  return 'La contraseña debe tener al menos 3 caracteres';
+                }
                 return null;
+              },
+              onChanged: (value) {
+                // Limpiar error cuando el usuario empiece a escribir
+                if (_lastError != null) {
+                  setState(() {
+                    _lastError = null;
+                  });
+                }
+              },
+              onFieldSubmitted: (value) {
+                // Permitir envio con Enter
+                if (_formKey.currentState?.validate() == true) {
+                  _onLoginPressed();
+                }
               },
             ),
             
@@ -106,8 +178,9 @@ class _LoginFormState extends State<LoginForm> {
             // Login Button
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
+                final isLoading = state is AuthLoading;
                 return ElevatedButton(
-                  onPressed: state is AuthLoading ? null : _onLoginPressed,
+                  onPressed: isLoading ? null : _onLoginPressed,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade600,
                     foregroundColor: Colors.white,
@@ -116,14 +189,27 @@ class _LoginFormState extends State<LoginForm> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: state is AuthLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
+                  child: isLoading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              'Iniciando sesión...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         )
                       : const Text(
                           'Iniciar Sesión',
@@ -141,12 +227,7 @@ class _LoginFormState extends State<LoginForm> {
             // Forgot Password Link
             TextButton(
               onPressed: () {
-                // TODO: Implement forgot password
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Funcionalidad en desarrollo'),
-                  ),
-                );
+                _showForgotPasswordDialog(context);
               },
               child: Text(
                 '¿Olvidaste tu contraseña?',
@@ -161,6 +242,11 @@ class _LoginFormState extends State<LoginForm> {
 
   void _onLoginPressed() {
     if (_formKey.currentState!.validate()) {
+      // Limpiar errores anteriores
+      setState(() {
+        _lastError = null;
+      });
+      
       final params = LoginParams(
         username: _usernameController.text.trim(),
         password: _passwordController.text,
@@ -168,5 +254,75 @@ class _LoginFormState extends State<LoginForm> {
       
       context.read<AuthBloc>().add(AuthLoginEvent(params));
     }
+  }
+
+  void _showErrorSnackBar(BuildContext context, Failure failure) {
+    Color backgroundColor;
+    IconData icon;
+    
+    if (failure is NetworkFailure) {
+      backgroundColor = Colors.orange;
+      icon = Icons.wifi_off;
+    } else if (failure is AuthenticationFailure) {
+      backgroundColor = Colors.red;
+      icon = Icons.error;
+    } else if (failure is ValidationFailure) {
+      backgroundColor = Colors.amber;
+      icon = Icons.warning;
+    } else {
+      backgroundColor = Colors.red;
+      icon = Icons.error;
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                failure.message,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        action: failure is NetworkFailure
+            ? SnackBarAction(
+                label: 'Reintentar',
+                textColor: Colors.white,
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    _onLoginPressed();
+                  }
+                },
+              )
+            : null,
+      ),
+    );
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Recuperar Contraseña'),
+        content: const Text(
+          'Para recuperar tu contraseña, contacta al administrador del sistema o envía un email a soporte@biobug.com',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -47,17 +47,12 @@ class ApiClient {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          // Token expired, clear auth data and let user login again
-          // Since backend doesn't provide refresh token endpoint yet
           await _secureStorage.clearTokens();
         }
         handler.next(error);
       },
     ));
   }
-
-  // Remove refresh token method since backend doesn't support it yet
-  // Future<bool> _refreshToken() async { ... } - REMOVED
 
   Future<Response<T>> get<T>(
     String path, {
@@ -135,13 +130,13 @@ class ApiClient {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return const NetworkException(
-          'Tiempo de conexión agotado. Verifique su conexión a internet.',
+          'El servidor está tardando en responder. Inténtalo nuevamente.',
           'TIMEOUT',
         );
       
       case DioExceptionType.connectionError:
         return const NetworkException(
-          'Error de conexión. Verifique su conexión a internet.',
+          'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
           'CONNECTION_ERROR',
         );
       
@@ -150,13 +145,13 @@ class ApiClient {
       
       case DioExceptionType.cancel:
         return const NetworkException(
-          'Solicitud cancelada',
+          'La operación fue cancelada',
           'REQUEST_CANCELLED',
         );
       
       default:
         return const NetworkException(
-          'Error de red desconocido',
+          'Error de conexión. Verifica tu conexión a internet.',
           'UNKNOWN_NETWORK_ERROR',
         );
     }
@@ -165,6 +160,7 @@ class ApiClient {
   Exception _handleHttpError(Response response) {
     final statusCode = response.statusCode;
     final data = response.data;
+    final requestPath = response.requestOptions.path;
 
     switch (statusCode) {
       case 400:
@@ -180,50 +176,192 @@ class ApiClient {
           });
           
           return ValidationException(
-            data['title'] ?? 'Error de validación',
+            _getFriendlyValidationMessage(fieldErrors),
             fieldErrors: fieldErrors,
             code: 'VALIDATION_ERROR',
           );
         }
-        return ServerException(
-          data['message'] ?? 'Solicitud inválida',
-          statusCode: statusCode,
+        
+        // Handle specific validation messages
+        return ValidationException(
+          _getFriendlyBadRequestMessage(data, requestPath),
           code: 'BAD_REQUEST',
         );
       
       case 401:
         return AuthenticationException(
-          data['message'] ?? 'Credenciales inválidas',
+          _getFriendlyAuthMessage(data, requestPath),
           'UNAUTHORIZED',
         );
       
       case 403:
         return UnauthorizedException(
-          'No tiene permisos para realizar esta acción',
+          'No tienes permisos para realizar esta acción. Contacta al administrador.',
           'FORBIDDEN',
         );
       
       case 404:
         return ServerException(
-          'Recurso no encontrado',
+          _getFriendly404Message(requestPath),
           statusCode: statusCode,
           code: 'NOT_FOUND',
         );
       
+      case 409:
+        return ServerException(
+          _getFriendly409Message(data, requestPath),
+          statusCode: statusCode,
+          code: 'CONFLICT',
+        );
+      
+      case 422:
+        return ValidationException(
+          _getFriendly422Message(data, requestPath),
+          code: 'UNPROCESSABLE_ENTITY',
+        );
+      
       case 500:
         return ServerException(
-          data['message'] ?? 'Error interno del servidor',
+          'Error interno del servidor. Inténtalo más tarde o contacta al soporte.',
           statusCode: statusCode,
-          errors: data['errors'],
+          errors: data is Map<String, dynamic> ? data['errors'] : null,
           code: 'INTERNAL_SERVER_ERROR',
+        );
+      
+      case 503:
+        return ServerException(
+          'El servidor está temporalmente fuera de servicio. Inténtalo más tarde.',
+          statusCode: statusCode,
+          code: 'SERVICE_UNAVAILABLE',
         );
       
       default:
         return ServerException(
-          'Error del servidor ($statusCode)',
+          'Error del servidor. Inténtalo nuevamente.',
           statusCode: statusCode,
           code: 'HTTP_ERROR',
         );
+    }
+  }
+
+  String _getFriendlyValidationMessage(Map<String, List<String>> fieldErrors) {
+    if (fieldErrors.isEmpty) return 'Los datos ingresados no son válidos';
+    
+    final firstError = fieldErrors.entries.first;
+    final field = firstError.key;
+    final errors = firstError.value;
+    
+    if (errors.isEmpty) return 'Los datos ingresados no son válidos';
+    
+    // Mapear campos técnicos a nombres amigables
+    final friendlyFieldName = _getFriendlyFieldName(field);
+    return '$friendlyFieldName: ${errors.first}';
+  }
+
+  String _getFriendlyBadRequestMessage(dynamic data, String requestPath) {
+    if (data is Map<String, dynamic> && data.containsKey('message')) {
+      return data['message'];
+    }
+    
+    if (requestPath.contains('/auth/login')) {
+      return 'Datos de inicio de sesión inválidos';
+    }
+    
+    if (requestPath.contains('/auth/register')) {
+      return 'Datos de registro inválidos';
+    }
+    
+    return 'Los datos enviados no son válidos';
+  }
+
+  String _getFriendlyAuthMessage(dynamic data, String requestPath) {
+    if (data is Map<String, dynamic> && data.containsKey('message')) {
+      final message = data['message'].toString().toLowerCase();
+      
+      if (message.contains('invalid credentials') || 
+          message.contains('credenciales') ||
+          message.contains('password') ||
+          message.contains('contraseña')) {
+        return 'Email o contraseña incorrectos';
+      }
+      
+      if (message.contains('user not found') || 
+          message.contains('usuario no encontrado')) {
+        return 'No existe una cuenta asociada a este email o identificación';
+      }
+    }
+    
+    if (requestPath.contains('/auth/login')) {
+      return 'Email o contraseña incorrectos';
+    }
+    
+    return 'Credenciales inválidas';
+  }
+
+  String _getFriendly404Message(String requestPath) {
+    if (requestPath.contains('/auth/login')) {
+      return 'Usuario o contraseña Incorrectos';
+    }
+    
+    if (requestPath.contains('/auth/register')) {
+      return 'Error en el registro. Verifica tus datos e inténtalo nuevamente.';
+    }
+    
+    if (requestPath.contains('/auth/')) {
+      return 'Usuario no encontrado';
+    }
+    
+    return 'El recurso solicitado no existe';
+  }
+
+  String _getFriendly409Message(dynamic data, String requestPath) {
+    if (data is Map<String, dynamic> && data.containsKey('message')) {
+      final message = data['message'].toString().toLowerCase();
+      
+      if (message.contains('email') || message.contains('correo')) {
+        return 'Ya existe una cuenta con este email';
+      }
+      
+      if (message.contains('identification') || message.contains('cedula')) {
+        return 'Ya existe una cuenta con este número de identificación';
+      }
+    }
+    
+    if (requestPath.contains('/auth/register')) {
+      return 'Ya existe una cuenta con estos datos';
+    }
+    
+    return 'Los datos ya existen en el sistema';
+  }
+
+  String _getFriendly422Message(dynamic data, String requestPath) {
+    if (data is Map<String, dynamic> && data.containsKey('message')) {
+      return data['message'];
+    }
+    
+    if (requestPath.contains('/auth/register')) {
+      return 'Los datos de registro no son válidos';
+    }
+    
+    return 'Los datos no pudieron ser procesados';
+  }
+
+  String _getFriendlyFieldName(String fieldName) {
+    switch (fieldName.toLowerCase()) {
+      case 'email':
+        return 'Email';
+      case 'password':
+        return 'Contraseña';
+      case 'username':
+        return 'Usuario';
+      case 'fullname':
+        return 'Nombre completo';
+      case 'identification':
+        return 'Identificación';
+      case 'idtype':
+        return 'Tipo de identificación';
+      default:
+        return fieldName;
     }
   }
 }
