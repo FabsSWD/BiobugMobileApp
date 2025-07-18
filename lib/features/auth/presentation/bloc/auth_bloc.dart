@@ -42,15 +42,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final result = await _checkAuthStatus(NoParams());
     
-    result.fold(
-      (failure) => emit(AuthError(failure)),
+    await result.fold(
+      (failure) async {
+        emit(AuthError(failure));
+      },
       (isLoggedIn) async {
         if (isLoggedIn) {
           // Get current user if logged in
           final userResult = await _getCurrentUser(NoParams());
-          userResult.fold(
-            (failure) => emit(AuthError(failure)),
-            (user) {
+          await userResult.fold(
+            (failure) async {
+              emit(AuthError(failure));
+            },
+            (user) async {
               if (user != null) {
                 emit(AuthAuthenticated(user));
               } else {
@@ -73,14 +77,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final result = await _loginUser(event.params);
     
-    result.fold(
-      (failure) => emit(AuthError(failure)),
-      (authResult) {
+    await result.fold(
+      (failure) async {
+        emit(AuthError(failure));
+      },
+      (authResult) async {
         if (authResult.user != null) {
           emit(AuthAuthenticated(authResult.user!));
         } else {
           // Si no hay userData, intentar obtener datos del usuario
-          add(AuthCheckStatusEvent());
+          if (!emit.isDone) {
+            add(AuthCheckStatusEvent());
+          }
         }
       },
     );
@@ -94,10 +102,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final result = await _registerUser(event.params);
     
-    result.fold(
-      (failure) => emit(AuthError(failure)),
-      (authResult) {
-        // ✅ MANEJAR CASO DONDE userData ES NULL
+    await result.fold(
+      (failure) async {
+        emit(AuthError(failure));
+      },
+      (authResult) async {
         if (authResult.user != null) {
           emit(AuthAuthenticated(authResult.user!));
         } else {
@@ -118,9 +127,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final result = await _logoutUser(NoParams());
     
-    result.fold(
-      (failure) => emit(AuthError(failure)),
-      (_) => emit(AuthUnauthenticated()),
+    await result.fold(
+      (failure) async {
+        emit(AuthError(failure));
+      },
+      (_) async {
+        emit(AuthUnauthenticated());
+      },
     );
   }
 
@@ -131,9 +144,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // Don't emit loading for refresh token to avoid UI flicker
     final result = await _refreshAuthToken(NoParams());
     
-    result.fold(
-      (failure) => emit(AuthUnauthenticated()), // Force logout on refresh failure
-      (authResult) {
+    await result.fold(
+      (failure) async {
+        emit(AuthUnauthenticated()); // Force logout on refresh failure
+      },
+      (authResult) async {
         if (authResult.user != null) {
           emit(AuthAuthenticated(authResult.user!));
         } else {

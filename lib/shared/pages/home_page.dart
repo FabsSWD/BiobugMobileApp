@@ -4,8 +4,6 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/signature_capture/presentation/pages/signature_capture_page.dart';
-// ignore: unused_import
-import '../../features/signature_capture/presentation/pages/signature_gallery_page.dart';
 import '../themes/app_colors.dart';
 import '../widgets/offline_indicator.dart';
 import '../routes/app_routes.dart';
@@ -27,7 +25,7 @@ class _HomePageState extends State<HomePage> {
       'icon': Icons.draw,
       'color': AppColors.primary,
       'route': AppRoutes.signatureCapture,
-      'implemented': true, // NEW: Mark as implemented
+      'implemented': true,
     },
     {
       'title': 'Galería de Firmas',
@@ -35,11 +33,11 @@ class _HomePageState extends State<HomePage> {
       'icon': Icons.photo_library,
       'color': AppColors.accent,
       'route': AppRoutes.signatureGallery,
-      'implemented': true, // NEW: Mark as implemented
+      'implemented': true,
     },
     {
       'title': 'Facturación',
-      'subtitle': 'Generar comprobantes y facturas',
+      'subtitle': 'Generar comprobantes',
       'icon': Icons.receipt_long,
       'color': AppColors.secondary,
       'route': '/billing',
@@ -47,7 +45,7 @@ class _HomePageState extends State<HomePage> {
     },
     {
       'title': 'Tratamientos',
-      'subtitle': 'Registrar actividades de tratamiento',
+      'subtitle': 'Registrar actividades',
       'icon': Icons.science,
       'color': AppColors.accent,
       'route': '/treatments',
@@ -55,7 +53,7 @@ class _HomePageState extends State<HomePage> {
     },
     {
       'title': 'Monitoreo',
-      'subtitle': 'Gestionar estaciones de control',
+      'subtitle': 'Gestionar estaciones',
       'icon': Icons.monitor_heart,
       'color': AppColors.success,
       'route': '/monitoring',
@@ -63,7 +61,7 @@ class _HomePageState extends State<HomePage> {
     },
     {
       'title': 'Técnicas',
-      'subtitle': 'Base de datos de técnicas',
+      'subtitle': 'Base de datos',
       'icon': Icons.menu_book,
       'color': AppColors.info,
       'route': '/techniques',
@@ -229,13 +227,6 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Módulos del Sistema',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -243,7 +234,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 1.2,
+              childAspectRatio: 1.0, // Cambiado de 1.2 a 1.0 para más altura
             ),
             itemCount: _menuItems.length,
             itemBuilder: (context, index) {
@@ -268,7 +259,7 @@ class _HomePageState extends State<HomePage> {
         onTap: () => _handleModuleTap(item),
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
@@ -282,21 +273,24 @@ class _HomePageState extends State<HomePage> {
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
+              // Icon con indicador
               Stack(
+                clipBehavior: Clip.none,
                 children: [
                   Icon(
                     item['icon'],
-                    size: 48,
+                    size: 40,
                     color: isImplemented ? item['color'] : AppColors.grey400,
                   ),
                   if (isImplemented)
                     Positioned(
-                      right: 0,
-                      top: 0,
+                      right: -2,
+                      top: -2,
                       child: Container(
-                        width: 12,
-                        height: 12,
+                        width: 10,
+                        height: 10,
                         decoration: const BoxDecoration(
                           color: AppColors.success,
                           shape: BoxShape.circle,
@@ -305,37 +299,51 @@ class _HomePageState extends State<HomePage> {
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              
+              const SizedBox(height: 8), // Reducido de 12 a 8
+              
+              // Título
               Text(
                 item['title'],
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isImplemented ? null : AppColors.grey500,
+                  fontSize: 14, // Reducido para evitar overflow
                 ),
                 textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item['subtitle'],
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isImplemented ? null : AppColors.grey400,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 2, // Limitado a 2 líneas
                 overflow: TextOverflow.ellipsis,
               ),
+              
+              const SizedBox(height: 2), // Reducido de 4 a 2
+              
+              // Subtítulo
+              Flexible( // Añadido Flexible para mejor manejo del espacio
+                child: Text(
+                  item['subtitle'],
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isImplemented ? null : AppColors.grey400,
+                    fontSize: 11, // Reducido para evitar overflow
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              
+              // Etiqueta "En desarrollo" (más compacta)
               if (!isImplemented) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 4), // Reducido de 8 a 4
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reducido
                   decoration: BoxDecoration(
                     color: AppColors.warning.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6), // Reducido de 8 a 6
                   ),
-                  child: const Text(
+                  child: Text(
                     'En desarrollo',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9, // Reducido de 10 a 9
                       color: AppColors.warning,
                       fontWeight: FontWeight.bold,
                     ),
@@ -435,7 +443,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 
-                // NEW: Quick access to signature gallery
+                // Quick access to signature gallery
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.draw, color: AppColors.primary),
@@ -488,48 +496,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-// Added Android permissions in android/app/src/main/AndroidManifest.xml
-/*
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    
-    <!-- Existing permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
-    <!-- NEW: Storage permissions for signature files -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
-                     android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    
-    <application
-        android:label="BIOBUG"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            
-            <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
-              
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-        
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
-    </application>
-</manifest>
-*/
