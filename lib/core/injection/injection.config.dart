@@ -37,6 +37,50 @@ import 'package:biobug_mobile_app/features/auth/domain/usecases/register_user.da
     as _i521;
 import 'package:biobug_mobile_app/features/auth/presentation/bloc/auth_bloc.dart'
     as _i958;
+import 'package:biobug_mobile_app/features/inventory/domain/repositories/inventory_repository.dart'
+    as _i24;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/add_product.dart'
+    as _i913;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/add_supplier.dart'
+    as _i109;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/calculate_product_cost.dart'
+    as _i25;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/check_stock_alerts.dart'
+    as _i678;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/consume_stock.dart'
+    as _i591;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/create_stock_movement.dart'
+    as _i287;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/delete_product.dart'
+    as _i199;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/generate_inventory_report.dart'
+    as _i829;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_expiring_products.dart'
+    as _i644;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_inventory_alerts.dart'
+    as _i915;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_inventory_items.dart'
+    as _i1056;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_inventory_statistics.dart'
+    as _i489;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_low_stock_items.dart'
+    as _i359;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_products.dart'
+    as _i556;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_stock_movements.dart'
+    as _i149;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/get_suppliers.dart'
+    as _i391;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/mark_alert_as_read.dart'
+    as _i55;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/search_products.dart'
+    as _i198;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/sync_inventory_data.dart'
+    as _i226;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/update_product.dart'
+    as _i627;
+import 'package:biobug_mobile_app/features/inventory/domain/usecases/update_stock.dart'
+    as _i826;
 import 'package:biobug_mobile_app/features/signature_capture/data/datasources/signature_local_datasource.dart'
     as _i925;
 import 'package:biobug_mobile_app/features/signature_capture/data/datasources/signature_remote_datasource.dart'
@@ -81,6 +125,69 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i101.InputConverter>(() => _i101.InputConverter());
     gh.lazySingleton<_i777.LocalStorage>(
       () => _i777.LocalStorage(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i913.AddProduct>(
+      () => _i913.AddProduct(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i109.AddSupplier>(
+      () => _i109.AddSupplier(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i25.CalculateProductCost>(
+      () => _i25.CalculateProductCost(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i678.CheckStockAlerts>(
+      () => _i678.CheckStockAlerts(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i591.ConsumeStock>(
+      () => _i591.ConsumeStock(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i287.CreateStockMovement>(
+      () => _i287.CreateStockMovement(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i199.DeleteProduct>(
+      () => _i199.DeleteProduct(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i829.GenerateInventoryReport>(
+      () => _i829.GenerateInventoryReport(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i644.GetExpiringProducts>(
+      () => _i644.GetExpiringProducts(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i915.GetInventoryAlerts>(
+      () => _i915.GetInventoryAlerts(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i1056.GetInventoryItems>(
+      () => _i1056.GetInventoryItems(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i489.GetInventoryStatistics>(
+      () => _i489.GetInventoryStatistics(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i359.GetLowStockItems>(
+      () => _i359.GetLowStockItems(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i556.GetProducts>(
+      () => _i556.GetProducts(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i149.GetStockMovements>(
+      () => _i149.GetStockMovements(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i391.GetSuppliers>(
+      () => _i391.GetSuppliers(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i55.MarkAlertAsRead>(
+      () => _i55.MarkAlertAsRead(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i198.SearchProducts>(
+      () => _i198.SearchProducts(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i226.SyncInventoryData>(
+      () => _i226.SyncInventoryData(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i627.UpdateProduct>(
+      () => _i627.UpdateProduct(gh<_i24.InventoryRepository>()),
+    );
+    gh.lazySingleton<_i826.UpdateStock>(
+      () => _i826.UpdateStock(gh<_i24.InventoryRepository>()),
     );
     gh.lazySingleton<_i580.NetworkInfo>(
       () => _i580.NetworkInfoImpl(gh<_i895.Connectivity>()),
