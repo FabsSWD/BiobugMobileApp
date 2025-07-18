@@ -5,17 +5,17 @@ class AuthResult extends Equatable {
   final String token;
   final String refreshToken;
   final int tokenExpiration;
-  final User user;
+  final User? user; // ✅ Cambiar a nullable
 
   const AuthResult({
     required this.token,
     required this.refreshToken,
     required this.tokenExpiration,
-    required this.user,
+    this.user, // ✅ Nullable
   });
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     token,
     refreshToken,
     tokenExpiration,
@@ -24,6 +24,6 @@ class AuthResult extends Equatable {
 
   @override
   String toString() {
-    return 'AuthResult(token: ${token.substring(0, 10)}..., refreshToken: ${refreshToken.substring(0, 10)}..., tokenExpiration: $tokenExpiration, user: $user)';
+    return 'AuthResult(token: ${token.substring(0, 10)}..., refreshToken: ${refreshToken.isNotEmpty ? '${refreshToken.substring(0, 10)}...' : 'empty'}, tokenExpiration: $tokenExpiration, user: $user)';
   }
 }

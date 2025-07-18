@@ -75,7 +75,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     
     result.fold(
       (failure) => emit(AuthError(failure)),
-      (authResult) => emit(AuthAuthenticated(authResult.user)),
+      (authResult) {
+        if (authResult.user != null) {
+          emit(AuthAuthenticated(authResult.user!));
+        } else {
+          // Si no hay userData, intentar obtener datos del usuario
+          add(AuthCheckStatusEvent());
+        }
+      },
     );
   }
 
@@ -89,7 +96,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     
     result.fold(
       (failure) => emit(AuthError(failure)),
-      (authResult) => emit(AuthAuthenticated(authResult.user)),
+      (authResult) {
+        // ✅ MANEJAR CASO DONDE userData ES NULL
+        if (authResult.user != null) {
+          emit(AuthAuthenticated(authResult.user!));
+        } else {
+          // Si el registro fue exitoso pero no hay userData,
+          // crear un usuario temporal con los datos del registro
+          // o redirigir al login
+          emit(AuthRegistrationSuccess());
+        }
+      },
     );
   }
 
@@ -116,7 +133,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     
     result.fold(
       (failure) => emit(AuthUnauthenticated()), // Force logout on refresh failure
-      (authResult) => emit(AuthAuthenticated(authResult.user)),
+      (authResult) {
+        if (authResult.user != null) {
+          emit(AuthAuthenticated(authResult.user!));
+        } else {
+          emit(AuthUnauthenticated());
+        }
+      },
     );
   }
 }

@@ -21,7 +21,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<AuthResultModel> login(LoginRequestModel request) async {
     final response = await _apiClient.post(
       ApiConstants.loginEndpoint,
-      data: request.toJson(),
+      data: request.toJson(), // ✅ Esto debería funcionar
     );
 
     if (response.statusCode == 200) {
@@ -33,9 +33,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthResultModel> register(RegisterRequestModel request) async {
+    // ✅ ASEGÚRATE DE QUE ESTO USE .toJson()
     final response = await _apiClient.post(
       ApiConstants.registerEndpoint,
-      data: request.toJson(),
+      data: request.toJson(), // ← Esto es crucial
     );
 
     if (response.statusCode == 200) {

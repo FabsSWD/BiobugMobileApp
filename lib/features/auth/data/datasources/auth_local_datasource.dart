@@ -32,7 +32,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       );
 
       // Save user data
-      final userJson = jsonEncode(authResult.userModel.toJson());
+      final userJson = jsonEncode(authResult.userModel?.toJson());
       await _secureStorage.saveUserData(userJson);
     } catch (e) {
       throw CacheException('Error al guardar datos de autenticación: $e');

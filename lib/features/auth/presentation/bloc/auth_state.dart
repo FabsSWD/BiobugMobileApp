@@ -24,6 +24,9 @@ class AuthAuthenticated extends AuthState {
 
 class AuthUnauthenticated extends AuthState {}
 
+// ✅ NUEVO: Estado para registro exitoso sin userData
+class AuthRegistrationSuccess extends AuthState {}
+
 class AuthError extends AuthState {
   final Failure failure;
 

@@ -9,21 +9,25 @@ class AuthResultModel extends AuthResult {
   @JsonKey(name: 'token')
   final String accessToken;
   
+  @JsonKey(name: 'tokenRefresh')
+  final String? refreshTokenValue;
+  
   @JsonKey(name: 'tokenExpiration')
   final int expirationTime;
   
   @JsonKey(name: 'userData')
-  final UserModel userModel;
+  final UserModel? userModel; // ✅ Cambiar a nullable
 
   const AuthResultModel({
     required this.accessToken,
+    this.refreshTokenValue,
     required this.expirationTime,
-    required this.userModel,
+    this.userModel, // ✅ Cambiar a nullable
   }) : super(
           token: accessToken,
-          refreshToken: accessToken, // Use same token as refresh for now
+          refreshToken: refreshTokenValue ?? '', // ✅ Valor por defecto
           tokenExpiration: expirationTime,
-          user: userModel,
+          user: userModel, // ✅ Puede ser null
         );
 
   factory AuthResultModel.fromJson(Map<String, dynamic> json) =>
@@ -34,9 +38,9 @@ class AuthResultModel extends AuthResult {
   AuthResult toEntity() {
     return AuthResult(
       token: accessToken,
-      refreshToken: accessToken, // Use same token as refresh for now
+      refreshToken: refreshTokenValue ?? '',
       tokenExpiration: expirationTime,
-      user: userModel.toEntity(),
+      user: userModel?.toEntity(), // ✅ Manejar null
     );
   }
 }

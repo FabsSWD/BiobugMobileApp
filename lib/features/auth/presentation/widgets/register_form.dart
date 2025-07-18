@@ -52,6 +52,19 @@ class _RegisterFormState extends State<RegisterForm> {
           );
         } else if (state is AuthAuthenticated) {
           Navigator.pushReplacementNamed(context, '/home');
+        } else if (state is AuthRegistrationSuccess) {
+          // ✅ NUEVO: Manejar registro exitoso sin userData
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Registro exitoso. Por favor, inicia sesión.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          // Redirigir al login después de un breve delay
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.pushReplacementNamed(context, '/login');
+          });
         }
       },
       child: Form(

@@ -9,8 +9,8 @@ part of 'register_request_model.dart';
 RegisterRequestModel _$RegisterRequestModelFromJson(
   Map<String, dynamic> json,
 ) => RegisterRequestModel(
-  idType: (json['idType'] as num).toInt(),
-  identification: (json['identification'] as num).toInt(),
+  idType: json['idType'] as String,
+  identification: json['identification'] as String,
   fullName: json['fullName'] as String,
   email: json['email'] as String,
   password: json['password'] as String,

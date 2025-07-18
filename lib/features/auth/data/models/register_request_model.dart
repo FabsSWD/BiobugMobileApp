@@ -5,8 +5,8 @@ part 'register_request_model.g.dart';
 
 @JsonSerializable()
 class RegisterRequestModel {
-  final int idType;
-  final int identification;
+  final String idType;
+  final String identification;
   final String fullName;
   final String email;
   final String password;
@@ -26,8 +26,8 @@ class RegisterRequestModel {
 
   factory RegisterRequestModel.fromEntity(RegisterParams params) {
     return RegisterRequestModel(
-      idType: params.idType,
-      identification: params.identification,
+      idType: params.idType.toString().padLeft(2, '0'), // "01" para cédula física
+      identification: params.identification.toString(),
       fullName: params.fullName,
       email: params.email,
       password: params.password,
