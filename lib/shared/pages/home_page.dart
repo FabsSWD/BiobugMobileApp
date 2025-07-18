@@ -4,6 +4,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/signature_capture/presentation/pages/signature_capture_page.dart';
+import '../../features/signature_capture/presentation/pages/signature_gallery_page.dart';
 import '../themes/app_colors.dart';
 import '../widgets/offline_indicator.dart';
 import '../routes/app_routes.dart';
@@ -81,8 +82,12 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        print('HomePage BlocListener - State: ${state.runtimeType}');
         if (state is AuthUnauthenticated) {
+          print('Redirecting to login - user unauthenticated');
           Navigator.pushReplacementNamed(context, '/login');
+        } else if (state is AuthAuthenticated) {
+          print('User authenticated: ${state.user.fullName}');
         }
       },
       child: Scaffold(
@@ -104,50 +109,87 @@ class _HomePageState extends State<HomePage> {
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        // User Avatar
-                        CircleAvatar(
-                          radius: 25,
-                          backgroundColor: AppColors.white,
-                          child: BlocBuilder<AuthBloc, AuthState>(
-                            builder: (context, state) {
-                              if (state is AuthAuthenticated) {
-                                return Text(
+                    child: BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, state) {
+                        print('AppBar BlocBuilder - State: ${state.runtimeType}');
+                        
+                        // Mostrar loading mientras se cargan los datos
+                        if (state is AuthLoading) {
+                          return Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 25,
+                                backgroundColor: AppColors.white,
+                                child: const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Bienvenido',
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Cargando...',
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        
+                        // Mostrar datos del usuario cuando está autenticado
+                        if (state is AuthAuthenticated) {
+                          print('Rendering authenticated user: ${state.user.fullName}');
+                          return Row(
+                            children: [
+                              // User Avatar
+                              CircleAvatar(
+                                radius: 25,
+                                backgroundColor: AppColors.white,
+                                child: Text(
                                   state.user.fullName[0].toUpperCase(),
                                   style: const TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20,
                                   ),
-                                );
-                              }
-                              return const Icon(
-                                Icons.person,
-                                color: AppColors.primary,
-                              );
-                            },
-                          ),
-                        ),
-                        
-                        const SizedBox(width: 16),
-                        
-                        // Welcome Text
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Bienvenido',
-                                style: TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 14,
                                 ),
                               ),
-                              BlocBuilder<AuthBloc, AuthState>(
-                                builder: (context, state) {
-                                  if (state is AuthAuthenticated) {
-                                    return Text(
+                              
+                              const SizedBox(width: 16),
+                              
+                              // Welcome Text
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Bienvenido',
+                                      style: TextStyle(
+                                        color: AppColors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
                                       state.user.fullName,
                                       style: const TextStyle(
                                         color: AppColors.white,
@@ -155,31 +197,72 @@ class _HomePageState extends State<HomePage> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                       overflow: TextOverflow.ellipsis,
-                                    );
-                                  }
-                                  return const Text(
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                              // Logout Button
+                              IconButton(
+                                onPressed: () => _showLogoutDialog(context),
+                                icon: const Icon(
+                                  Icons.logout,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        
+                        // Estado por defecto (no autenticado, error, etc.)
+                        print('Rendering default state');
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: AppColors.white,
+                              child: const Icon(
+                                Icons.person,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            
+                            const SizedBox(width: 16),
+                            
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Bienvenido',
+                                    style: TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
                                     'Usuario',
                                     style: TextStyle(
                                       color: AppColors.white,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
-                                  );
-                                },
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                        
-                        // Logout Button
-                        IconButton(
-                          onPressed: () => _showLogoutDialog(context),
-                          icon: const Icon(
-                            Icons.logout,
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ],
+                            ),
+                            
+                            // Logout Button
+                            IconButton(
+                              onPressed: () => _showLogoutDialog(context),
+                              icon: const Icon(
+                                Icons.logout,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -227,6 +310,13 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'Módulos del Sistema',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -234,7 +324,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 1.0, // Cambiado de 1.2 a 1.0 para más altura
+              childAspectRatio: 1.0,
             ),
             itemCount: _menuItems.length,
             itemBuilder: (context, index) {
@@ -275,7 +365,6 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon con indicador
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -300,30 +389,28 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               
-              const SizedBox(height: 8), // Reducido de 12 a 8
+              const SizedBox(height: 8),
               
-              // Título
               Text(
                 item['title'],
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isImplemented ? null : AppColors.grey500,
-                  fontSize: 14, // Reducido para evitar overflow
+                  fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 2, // Limitado a 2 líneas
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               
-              const SizedBox(height: 2), // Reducido de 4 a 2
+              const SizedBox(height: 2),
               
-              // Subtítulo
-              Flexible( // Añadido Flexible para mejor manejo del espacio
+              Flexible(
                 child: Text(
                   item['subtitle'],
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: isImplemented ? null : AppColors.grey400,
-                    fontSize: 11, // Reducido para evitar overflow
+                    fontSize: 11,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -331,19 +418,18 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               
-              // Etiqueta "En desarrollo" (más compacta)
               if (!isImplemented) ...[
-                const SizedBox(height: 4), // Reducido de 8 a 4
+                const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reducido
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.warning.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(6), // Reducido de 8 a 6
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     'En desarrollo',
                     style: TextStyle(
-                      fontSize: 9, // Reducido de 10 a 9
+                      fontSize: 9,
                       color: AppColors.warning,
                       fontWeight: FontWeight.bold,
                     ),
@@ -362,7 +448,6 @@ class _HomePageState extends State<HomePage> {
     final route = item['route'] as String;
 
     if (isImplemented) {
-      // Navigate to implemented modules
       if (route == AppRoutes.signatureCapture) {
         Navigator.pushNamed(
           context,
@@ -378,7 +463,6 @@ class _HomePageState extends State<HomePage> {
         Navigator.pushNamed(context, route);
       }
     } else {
-      // Show development message for unimplemented modules
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${item['title']} - En desarrollo'),
@@ -400,7 +484,16 @@ class _HomePageState extends State<HomePage> {
   Widget _buildProfile() {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
+        print('Profile BlocBuilder - State: ${state.runtimeType}');
+        
+        if (state is AuthLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        
         if (state is AuthAuthenticated) {
+          print('Rendering profile for user: ${state.user.fullName}');
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -443,7 +536,6 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Quick access to signature gallery
                 Card(
                   child: ListTile(
                     leading: const Icon(Icons.draw, color: AppColors.primary),
@@ -466,8 +558,34 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-        return const Center(
-          child: Text('No se pudieron cargar los datos del usuario'),
+        
+        // Si no está autenticado o hay error
+        print('Rendering profile error/unauthenticated state');
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.grey400,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No se pudieron cargar los datos del usuario',
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  // Intentar recargar los datos del usuario
+                  context.read<AuthBloc>().add(AuthCheckStatusEvent());
+                },
+                child: const Text('Reintentar'),
+              ),
+            ],
+          ),
         );
       },
     );

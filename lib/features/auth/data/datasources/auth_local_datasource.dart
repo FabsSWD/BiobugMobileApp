@@ -24,17 +24,29 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> cacheAuthResult(AuthResultModel authResult) async {
     try {
-      // Save tokens - UPDATED to handle single token
+      print('AuthLocalDataSource.cacheAuthResult - Start');
+      print('Token: ${authResult.accessToken.substring(0, 20)}...');
+      print('User: ${authResult.userModel?.fullName ?? 'null'}');
+      
+      // Save tokens
       await _secureStorage.saveTokens(
         accessToken: authResult.accessToken,
-        refreshToken: authResult.accessToken, // Use same token
+        refreshToken: authResult.accessToken,
         expirationTime: authResult.expirationTime,
       );
+      print('Tokens saved successfully');
 
-      // Save user data
-      final userJson = jsonEncode(authResult.userModel?.toJson());
-      await _secureStorage.saveUserData(userJson);
+      // Save user data if available
+      if (authResult.userModel != null) {
+        final userJson = jsonEncode(authResult.userModel!.toJson());
+        await _secureStorage.saveUserData(userJson);
+        print('User data saved successfully');
+      } else {
+        print('No user data to save');
+      }
+      
     } catch (e) {
+      print('Error in cacheAuthResult: $e');
       throw CacheException('Error al guardar datos de autenticación: $e');
     }
   }
@@ -42,13 +54,21 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<UserModel?> getCachedUser() async {
     try {
+      print('AuthLocalDataSource.getCachedUser - Start');
+      
       final userJson = await _secureStorage.getUserData();
       if (userJson != null) {
+        print('Found cached user data');
         final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-        return UserModel.fromJson(userMap);
+        final userModel = UserModel.fromJson(userMap);
+        print('User: ${userModel.fullName}');
+        return userModel;
       }
+      
+      print('No cached user data found');
       return null;
     } catch (e) {
+      print('Error in getCachedUser: $e');
       throw CacheException('Error al obtener usuario guardado: $e');
     }
   }
@@ -56,8 +76,15 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<String?> getAccessToken() async {
     try {
-      return await _secureStorage.getAccessToken();
+      final token = await _secureStorage.getAccessToken();
+      if (token != null) {
+        print('Access token found');
+      } else {
+        print('No access token found');
+      }
+      return token;
     } catch (e) {
+      print('Error getting access token: $e');
       throw CacheException('Error al obtener token de acceso: $e');
     }
   }
@@ -83,9 +110,11 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<bool> isLoggedIn() async {
     try {
-      return await _secureStorage.isTokenValid();
+      final isValid = await _secureStorage.isTokenValid();
+      print('AuthLocalDataSource.isLoggedIn - Result: $isValid');
+      return isValid;
     } catch (e) {
-      // Si hay error al verificar, asumimos que no está logueado
+      print('Error checking login status: $e');
       return false;
     }
   }
@@ -93,8 +122,11 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> clearAuthData() async {
     try {
+      print('AuthLocalDataSource.clearAuthData - Start');
       await _secureStorage.clearAll();
+      print('All auth data cleared');
     } catch (e) {
+      print('Error clearing auth data: $e');
       throw CacheException('Error al limpiar datos de autenticación: $e');
     }
   }

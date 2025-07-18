@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../../../../core/error/failures.dart';
 import '../../domain/usecases/check_auth_status.dart';
 import '../../domain/usecases/get_current_user.dart';
 import '../../domain/usecases/login_user.dart';
@@ -38,30 +39,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckStatusEvent event,
     Emitter<AuthState> emit,
   ) async {
+    print('AuthBloc._onCheckAuthStatus - Start');
     emit(AuthLoading());
 
     final result = await _checkAuthStatus(NoParams());
     
     await result.fold(
       (failure) async {
-        emit(AuthError(failure));
+        print('Auth status check failed: ${failure.message}');
+        emit(AuthError(_createFriendlyFailure(failure, 'check_status')));
       },
       (isLoggedIn) async {
+        print('Auth status check result: $isLoggedIn');
         if (isLoggedIn) {
-          // Get current user if logged in
-          final userResult = await _getCurrentUser(NoParams());
-          await userResult.fold(
-            (failure) async {
-              emit(AuthError(failure));
-            },
-            (user) async {
-              if (user != null) {
-                emit(AuthAuthenticated(user));
-              } else {
-                emit(AuthUnauthenticated());
-              }
-            },
-          );
+          // Si está logueado, intentar cargar datos del usuario
+          await _loadUserData(emit);
         } else {
           emit(AuthUnauthenticated());
         }
@@ -73,23 +65,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLoginEvent event,
     Emitter<AuthState> emit,
   ) async {
+    print('AuthBloc._onLogin - Start');
     emit(AuthLoading());
 
     final result = await _loginUser(event.params);
     
     await result.fold(
       (failure) async {
-        emit(AuthError(failure));
+        print('Login failed: ${failure.message}');
+        emit(AuthError(_createFriendlyFailure(failure, 'login')));
       },
       (authResult) async {
-        if (authResult.user != null) {
-          emit(AuthAuthenticated(authResult.user!));
-        } else {
-          // Si no hay userData, intentar obtener datos del usuario
-          if (!emit.isDone) {
-            add(AuthCheckStatusEvent());
-          }
-        }
+        print('Login successful');
+        print('AuthResult has user data: ${authResult.user != null}');
+        
+        // Independientemente de si hay datos del usuario en authResult,
+        // siempre intentar cargar los datos del usuario después del login
+        await _loadUserData(emit);
       },
     );
   }
@@ -98,22 +90,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRegisterEvent event,
     Emitter<AuthState> emit,
   ) async {
+    print('AuthBloc._onRegister - Start');
     emit(AuthLoading());
 
     final result = await _registerUser(event.params);
     
     await result.fold(
       (failure) async {
-        emit(AuthError(failure));
+        print('Register failed: ${failure.message}');
+        emit(AuthError(_createFriendlyFailure(failure, 'register')));
       },
       (authResult) async {
+        print('Register successful');
+        
         if (authResult.user != null) {
           emit(AuthAuthenticated(authResult.user!));
         } else {
-          // Si el registro fue exitoso pero no hay userData,
-          // crear un usuario temporal con los datos del registro
-          // o redirigir al login
-          emit(AuthRegistrationSuccess());
+          // Intentar cargar datos del usuario después del registro
+          await _loadUserData(emit);
+          
+          // Si aún no hay datos, mostrar éxito de registro
+          if (state is! AuthAuthenticated) {
+            emit(AuthRegistrationSuccess());
+          }
         }
       },
     );
@@ -123,15 +122,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutEvent event,
     Emitter<AuthState> emit,
   ) async {
+    print('AuthBloc._onLogout - Start');
     emit(AuthLoading());
 
     final result = await _logoutUser(NoParams());
     
     await result.fold(
       (failure) async {
-        emit(AuthError(failure));
+        print('Logout failed: ${failure.message}');
+        // Incluso si el logout falla, limpiar el estado local
+        emit(AuthUnauthenticated());
       },
       (_) async {
+        print('Logout successful');
         emit(AuthUnauthenticated());
       },
     );
@@ -141,20 +144,192 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRefreshTokenEvent event,
     Emitter<AuthState> emit,
   ) async {
-    // Don't emit loading for refresh token to avoid UI flicker
+    print('AuthBloc._onRefreshToken - Start');
+    
     final result = await _refreshAuthToken(NoParams());
     
     await result.fold(
       (failure) async {
-        emit(AuthUnauthenticated()); // Force logout on refresh failure
+        print('Token refresh failed: ${failure.message}');
+        emit(AuthUnauthenticated());
       },
       (authResult) async {
+        print('Token refresh successful');
+        
         if (authResult.user != null) {
           emit(AuthAuthenticated(authResult.user!));
         } else {
-          emit(AuthUnauthenticated());
+          await _loadUserData(emit);
         }
       },
+    );
+  }
+
+  /// Método auxiliar para cargar datos del usuario
+  Future<void> _loadUserData(Emitter<AuthState> emit) async {
+    print('AuthBloc._loadUserData - Start');
+    
+    try {
+      final userResult = await _getCurrentUser(NoParams());
+      
+      await userResult.fold(
+        (failure) async {
+          print('Failed to load user data: ${failure.message}');
+          emit(AuthError(_createFriendlyFailure(failure, 'get_user')));
+        },
+        (user) async {
+          if (user != null) {
+            print('User data loaded successfully: ${user.fullName}');
+            emit(AuthAuthenticated(user));
+          } else {
+            print('No user data found');
+            emit(AuthError(CacheFailure(
+              'No se pudieron cargar los datos del usuario. Inicia sesión nuevamente.',
+            )));
+          }
+        },
+      );
+    } catch (e) {
+      print('Unexpected error loading user data: $e');
+      emit(AuthError(CacheFailure(
+        'Error inesperado al cargar datos del usuario.',
+      )));
+    }
+  }
+
+  /// Crea mensajes de error más amigables para el usuario
+  Failure _createFriendlyFailure(Failure failure, String context) {
+    // Si ya es un mensaje amigable, devolverlo tal como está
+    if (_isUserFriendlyMessage(failure.message)) {
+      return failure;
+    }
+
+    // Crear mensajes específicos según el contexto y tipo de error
+    switch (context) {
+      case 'login':
+        return _createLoginFailure(failure);
+      case 'register':
+        return _createRegisterFailure(failure);
+      case 'check_status':
+        return _createCheckStatusFailure(failure);
+      case 'get_user':
+        return _createGetUserFailure(failure);
+      default:
+        return _createGenericFailure(failure);
+    }
+  }
+
+  bool _isUserFriendlyMessage(String message) {
+    // Verificar si el mensaje ya es amigable
+    final friendlyIndicators = [
+      'email',
+      'contraseña',
+      'usuario',
+      'cuenta',
+      'datos',
+      'verifica',
+      'inténta',
+      'contacta',
+    ];
+    
+    return friendlyIndicators.any((indicator) => 
+      message.toLowerCase().contains(indicator));
+  }
+
+  Failure _createLoginFailure(Failure failure) {
+    if (failure is AuthenticationFailure || failure is ServerFailure) {
+      return AuthenticationFailure(
+        'Usuario o contraseña incorrectos. Verifica tus datos e inténtalo nuevamente.',
+        failure.code,
+      );
+    }
+    
+    if (failure is ValidationFailure) {
+      return ValidationFailure(
+        'Completa todos los campos correctamente.',
+        fieldErrors: failure.fieldErrors,
+        code: failure.code,
+      );
+    }
+    
+    if (failure is NetworkFailure) {
+      return NetworkFailure(
+        'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
+        failure.code,
+      );
+    }
+    
+    return AuthenticationFailure(
+      'Error al iniciar sesión. Verifica tus datos e inténtalo nuevamente.',
+    );
+  }
+
+  Failure _createRegisterFailure(Failure failure) {
+    if (failure is ValidationFailure) {
+      return ValidationFailure(
+        'Completa todos los campos correctamente.',
+        fieldErrors: failure.fieldErrors,
+        code: failure.code,
+      );
+    }
+    
+    if (failure is ServerFailure) {
+      if (failure.statusCode == 409) {
+        return ServerFailure(
+          'Ya existe una cuenta con este email o número de identificación.',
+          statusCode: failure.statusCode,
+          code: failure.code,
+        );
+      }
+      
+      return ServerFailure(
+        'Error al crear la cuenta. Inténtalo más tarde.',
+        statusCode: failure.statusCode,
+        code: failure.code,
+      );
+    }
+    
+    if (failure is NetworkFailure) {
+      return NetworkFailure(
+        'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
+        failure.code,
+      );
+    }
+    
+    return ValidationFailure(
+      'Error al crear la cuenta. Verifica los datos e inténtalo nuevamente.',
+    );
+  }
+
+  Failure _createCheckStatusFailure(Failure failure) {
+    if (failure is NetworkFailure) {
+      return NetworkFailure(
+        'No se pudo verificar el estado de la sesión. Verifica tu conexión a internet.',
+        failure.code,
+      );
+    }
+    
+    return CacheFailure(
+      'Error al verificar la sesión. Inicia sesión nuevamente.',
+    );
+  }
+
+  Failure _createGetUserFailure(Failure failure) {
+    return CacheFailure(
+      'No se pudieron cargar los datos del usuario. Inicia sesión nuevamente.',
+    );
+  }
+
+  Failure _createGenericFailure(Failure failure) {
+    if (failure is NetworkFailure) {
+      return NetworkFailure(
+        'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
+        failure.code,
+      );
+    }
+    
+    return ServerFailure(
+      'Error inesperado. Inténtalo más tarde.',
     );
   }
 }

@@ -19,13 +19,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthResultModel> login(LoginRequestModel request) async {
+    print('AuthRemoteDataSource.login - Start');
+    print('Request data: ${request.toJson()}');
+    
     final response = await _apiClient.post(
       ApiConstants.loginEndpoint,
-      data: request.toJson(), // ✅ Esto debería funcionar
+      data: request.toJson(),
     );
 
+    print('Login response status: ${response.statusCode}');
+    print('Login response data: ${response.data}');
+
     if (response.statusCode == 200) {
-      return AuthResultModel.fromJson(response.data);
+      try {
+        final authResult = AuthResultModel.fromJson(response.data);
+        print('AuthResult parsed successfully');
+        print('Has user data: ${authResult.userModel != null}');
+        return authResult;
+      } catch (e) {
+        print('Error parsing login response: $e');
+        print('Raw response data: ${response.data}');
+        rethrow;
+      }
     } else {
       throw Exception('Error en el login: ${response.statusCode}');
     }
@@ -33,14 +48,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthResultModel> register(RegisterRequestModel request) async {
-    // ✅ ASEGÚRATE DE QUE ESTO USE .toJson()
+    print('AuthRemoteDataSource.register - Start');
+    print('Request data: ${request.toJson()}');
+    
     final response = await _apiClient.post(
       ApiConstants.registerEndpoint,
-      data: request.toJson(), // ← Esto es crucial
+      data: request.toJson(),
     );
 
+    print('Register response status: ${response.statusCode}');
+    print('Register response data: ${response.data}');
+
     if (response.statusCode == 200) {
-      return AuthResultModel.fromJson(response.data);
+      try {
+        final authResult = AuthResultModel.fromJson(response.data);
+        print('AuthResult parsed successfully');
+        print('Has user data: ${authResult.userModel != null}');
+        return authResult;
+      } catch (e) {
+        print('Error parsing register response: $e');
+        print('Raw response data: ${response.data}');
+        rethrow;
+      }
     } else {
       throw Exception('Error en el registro: ${response.statusCode}');
     }
@@ -48,13 +77,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthResultModel> refreshToken(String refreshToken) async {
+    print('AuthRemoteDataSource.refreshToken - Start');
+    
     final response = await _apiClient.post(
       '/auth/refresh',
       data: {'refreshToken': refreshToken},
     );
 
+    print('Refresh token response status: ${response.statusCode}');
+    print('Refresh token response data: ${response.data}');
+
     if (response.statusCode == 200) {
-      return AuthResultModel.fromJson(response.data);
+      try {
+        final authResult = AuthResultModel.fromJson(response.data);
+        print('AuthResult parsed successfully');
+        return authResult;
+      } catch (e) {
+        print('Error parsing refresh token response: $e');
+        print('Raw response data: ${response.data}');
+        rethrow;
+      }
     } else {
       throw Exception('Error al refrescar token: ${response.statusCode}');
     }
