@@ -1,12 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: unused_element
+
 part of 'user_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-// ignore: unused_element
 UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
   userId: json['userId'] as String,
   idType: (json['idType'] as num).toInt(),
