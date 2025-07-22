@@ -4,7 +4,6 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/signature_capture/presentation/pages/signature_capture_page.dart';
-import '../../features/signature_capture/presentation/pages/signature_gallery_page.dart';
 import '../themes/app_colors.dart';
 import '../widgets/offline_indicator.dart';
 import '../routes/app_routes.dart';
