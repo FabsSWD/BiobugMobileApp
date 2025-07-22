@@ -2,8 +2,6 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../entities/inventory_item.dart';
-import '../entities/stock_movement.dart';
 import '../entities/stock_movement_type.dart';
 import '../repositories/inventory_repository.dart';
 
