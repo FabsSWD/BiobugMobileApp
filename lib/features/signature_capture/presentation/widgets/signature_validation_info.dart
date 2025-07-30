@@ -28,14 +28,14 @@ class SignatureValidationInfo extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.info.withOpacity(0.3)),
       ),
-      child: Row(
+      child: const Row(
         children: [
           Icon(
             Icons.info_outline,
             color: AppColors.info,
             size: 18,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               'Dibuje su firma claramente. Mín: 300x150px, 5 puntos',
@@ -82,14 +82,14 @@ class SignatureValidationInfo extends StatelessWidget {
                 topRight: Radius.circular(11),
               ),
             ),
-            child: Row(
+            child: const Row(
               children: [
                 Icon(
                   Icons.info_outline,
                   color: AppColors.info,
                   size: 20,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   'Instrucciones para la Firma',
                   style: TextStyle(
@@ -170,7 +170,7 @@ class SignatureValidationInfo extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     fontSize: 13,
@@ -179,7 +179,7 @@ class SignatureValidationInfo extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                     height: 1.3,

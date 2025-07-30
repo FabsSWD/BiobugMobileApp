@@ -7,6 +7,7 @@ class InventoryAlert extends Equatable {
   final String inventoryItemId;
   final String productId;
   final InventoryAlertType type;
+  final String title;
   final String message;
   final InventoryAlertPriority priority;
   final bool isRead;
@@ -21,6 +22,7 @@ class InventoryAlert extends Equatable {
     required this.inventoryItemId,
     required this.productId,
     required this.type,
+    required this.title,
     required this.message,
     required this.priority,
     required this.isRead,
@@ -37,6 +39,7 @@ class InventoryAlert extends Equatable {
         inventoryItemId,
         productId,
         type,
+        title,
         message,
         priority,
         isRead,
@@ -52,6 +55,7 @@ class InventoryAlert extends Equatable {
     String? inventoryItemId,
     String? productId,
     InventoryAlertType? type,
+    String? title,
     String? message,
     InventoryAlertPriority? priority,
     bool? isRead,
@@ -66,6 +70,7 @@ class InventoryAlert extends Equatable {
       inventoryItemId: inventoryItemId ?? this.inventoryItemId,
       productId: productId ?? this.productId,
       type: type ?? this.type,
+      title: title ?? this.title,
       message: message ?? this.message,
       priority: priority ?? this.priority,
       isRead: isRead ?? this.isRead,
@@ -75,10 +80,5 @@ class InventoryAlert extends Equatable {
       resolvedBy: resolvedBy ?? this.resolvedBy,
       metadata: metadata ?? this.metadata,
     );
-  }
-
-  @override
-  String toString() {
-    return 'InventoryAlert(id: $id, type: $type, priority: $priority, isResolved: $isResolved)';
   }
 }

@@ -111,7 +111,7 @@ class SignaturePreview extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Detalles de la Firma',
               style: TextStyle(
                 fontSize: 16,

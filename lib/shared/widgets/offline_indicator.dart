@@ -44,9 +44,9 @@ class _OfflineIndicatorState extends State<OfflineIndicator> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8),
             color: AppColors.warning,
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(
                   Icons.wifi_off,
                   color: AppColors.white,

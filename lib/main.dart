@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/injection/injection.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
+import 'features/inventory/presentation/bloc/inventory_bloc.dart'; // ← Agregar import
 import 'shared/themes/app_theme.dart';
 import 'shared/routes/app_routes.dart';
 
@@ -20,8 +21,15 @@ class BioBugApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<AuthBloc>()..add(AuthCheckStatusEvent()),
+    return MultiBlocProvider(  // MultiBlocProvider
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (context) => getIt<AuthBloc>()..add(AuthCheckStatusEvent()),
+        ),
+        BlocProvider<InventoryBloc>(
+          create: (context) => getIt<InventoryBloc>(),
+        ),
+      ],
       child: MaterialApp(
         title: 'BIOBUG',
         debugShowCheckedModeBanner: false,

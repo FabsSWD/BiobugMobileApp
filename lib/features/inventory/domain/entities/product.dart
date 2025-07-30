@@ -116,3 +116,24 @@ class Product extends Equatable {
     return 'Product(id: $id, name: $name, activeIngredient: $activeIngredient, concentration: $concentration)';
   }
 }
+
+extension ProductExtensions on Product {
+  bool isExpiringWithin(int daysThreshold) {
+    final now = DateTime.now();
+    final daysUntilExpiration = expirationDate.difference(now).inDays;
+    return daysUntilExpiration <= daysThreshold && daysUntilExpiration >= 0;
+  }
+  
+  bool get isExpired => expirationDate.isBefore(DateTime.now());
+  
+  static bool shouldCreateExpirationAlert(Product product, int daysThreshold) {
+    return product.isExpiringWithin(daysThreshold);
+  }
+  
+  static bool isProductCodeUnique(String code, List<Product> existingProducts, String? currentProductId) {
+    return !existingProducts.any((product) => 
+      product.sanitaryRegistryNumber == code && 
+      product.id != currentProductId
+    );
+  }
+}

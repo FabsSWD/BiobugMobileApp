@@ -68,7 +68,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         if (localProduct != null) {
           return Right(localProduct.toEntity());
         } else {
-          return Left(CacheFailure('Producto no encontrado localmente'));
+          return const Left(CacheFailure('Producto no encontrado localmente'));
         }
       }
     } on ServerException catch (e) {
@@ -236,7 +236,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         if (localItem != null) {
           return Right(localItem.toEntity());
         } else {
-          return Left(CacheFailure('Item de inventario no encontrado localmente'));
+          return const Left(CacheFailure('Item de inventario no encontrado localmente'));
         }
       }
     } on ServerException catch (e) {
@@ -409,7 +409,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       if (localMovement != null) {
         return Right(localMovement.toEntity());
       } else {
-        return Left(CacheFailure('Movimiento de stock no encontrado'));
+        return const Left(CacheFailure('Movimiento de stock no encontrado'));
       }
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
@@ -542,7 +542,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final alertToUpdate = alert.where((a) => a.id == alertId).firstOrNull;
       
       if (alertToUpdate == null) {
-        return Left(CacheFailure('Alerta no encontrada'));
+        return const Left(CacheFailure('Alerta no encontrada'));
       }
 
       final updatedAlert = InventoryAlertModel.fromEntity(
@@ -575,7 +575,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final alertToUpdate = alerts.where((a) => a.id == alertId).firstOrNull;
       
       if (alertToUpdate == null) {
-        return Left(CacheFailure('Alerta no encontrada'));
+        return const Left(CacheFailure('Alerta no encontrada'));
       }
 
       final updatedAlert = InventoryAlertModel.fromEntity(
@@ -688,7 +688,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         if (localSupplier != null) {
           return Right(localSupplier.toEntity());
         } else {
-          return Left(CacheFailure('Proveedor no encontrado localmente'));
+          return const Left(CacheFailure('Proveedor no encontrado localmente'));
         }
       }
     } on ServerException catch (e) {
@@ -839,7 +839,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final product = await localDataSource.getProductById(productId);
       
       if (product == null) {
-        return Left(CacheFailure('Producto no encontrado'));
+        return const Left(CacheFailure('Producto no encontrado'));
       }
 
       final filteredMovements = movements.where((m) =>
@@ -1006,12 +1006,31 @@ class InventoryRepositoryImpl implements InventoryRepository {
     }
   }
 
+  // Helper methods for alert creation
+  String _getAlertTitle(InventoryAlertType type) {
+    switch (type) {
+      case InventoryAlertType.lowStock:
+        return 'Stock Bajo';
+      case InventoryAlertType.outOfStock:
+        return 'Sin Stock';
+      case InventoryAlertType.overStock:
+        return 'Sobre Stock';
+      case InventoryAlertType.productExpiring:
+        return 'Producto por Vencer';
+      case InventoryAlertType.productExpired:
+        return 'Producto Vencido';
+      case InventoryAlertType.negativeStock:
+        return 'Stock Negativo';
+    }
+  }
+
   InventoryAlertModel _createStockAlert(InventoryItemModel item, InventoryAlertType type, InventoryAlertPriority priority) {
     return InventoryAlertModel(
       id: DateTime.now().millisecondsSinceEpoch.toString() + item.id,
       inventoryItemId: item.id,
       productId: item.productId,
       type: type,
+      title: _getAlertTitle(type),
       message: _getAlertMessage(type, item.productModel?.name ?? 'Producto desconocido'),
       priority: priority,
       isRead: false,
@@ -1026,6 +1045,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       inventoryItemId: '', // No hay item específico para alertas de producto
       productId: product.id,
       type: type,
+      title: _getAlertTitle(type),
       message: _getAlertMessage(type, product.name),
       priority: priority,
       isRead: false,
@@ -1061,7 +1081,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
         await localDataSource.importData(syncResult);
         return const Right(unit);
       } else {
-        return Left(NetworkFailure('No hay conexión a internet'));
+        return const Left(NetworkFailure('No hay conexión a internet'));
       }
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

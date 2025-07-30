@@ -138,7 +138,7 @@ class SignatureCanvasState extends State<SignatureCanvas> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.success,
                       shape: BoxShape.circle,
                     ),
@@ -171,7 +171,7 @@ class SignatureCanvasState extends State<SignatureCanvas> {
                 
                 // Empty state overlay
                 if (_controller.isEmpty)
-                  Center(
+                  const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -180,7 +180,7 @@ class SignatureCanvasState extends State<SignatureCanvas> {
                           size: 48,
                           color: AppColors.grey400,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           'Dibuje su firma aquí',
                           style: TextStyle(
@@ -189,7 +189,7 @@ class SignatureCanvasState extends State<SignatureCanvas> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'Use su dedo o stylus',
                           style: TextStyle(
@@ -207,9 +207,9 @@ class SignatureCanvasState extends State<SignatureCanvas> {
           // Bottom info bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.grey50,
-              borderRadius: const BorderRadius.only(
+              borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(14),
                 bottomRight: Radius.circular(14),
               ),
@@ -237,7 +237,7 @@ class SignatureCanvasState extends State<SignatureCanvas> {
                       color: AppColors.success.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Válida',
                       style: TextStyle(
                         fontSize: 10,

@@ -10,49 +10,49 @@ class ValidateSupplier implements UseCase<Unit, Supplier> {
   Future<Either<Failure, Unit>> call(Supplier params) async {
     // Validar nombre
     if (params.name.trim().isEmpty) {
-      return Left(ValidationFailure('El nombre del proveedor es requerido'));
+      return const Left(ValidationFailure('El nombre del proveedor es requerido'));
     }
 
     if (params.name.length < 2) {
-      return Left(ValidationFailure('El nombre del proveedor debe tener al menos 2 caracteres'));
+      return const Left(ValidationFailure('El nombre del proveedor debe tener al menos 2 caracteres'));
     }
 
     // Validar persona de contacto
     if (params.contactPerson.trim().isEmpty) {
-      return Left(ValidationFailure('La persona de contacto es requerida'));
+      return const Left(ValidationFailure('La persona de contacto es requerida'));
     }
 
     // Validar email
     if (params.email.trim().isEmpty) {
-      return Left(ValidationFailure('El email es requerido'));
+      return const Left(ValidationFailure('El email es requerido'));
     }
 
     if (!_isValidEmail(params.email)) {
-      return Left(ValidationFailure('El formato del email no es válido'));
+      return const Left(ValidationFailure('El formato del email no es válido'));
     }
 
     // Validar teléfono
     if (params.phone.trim().isEmpty) {
-      return Left(ValidationFailure('El teléfono es requerido'));
+      return const Left(ValidationFailure('El teléfono es requerido'));
     }
 
     if (!_isValidPhone(params.phone)) {
-      return Left(ValidationFailure('El formato del teléfono no es válido'));
+      return const Left(ValidationFailure('El formato del teléfono no es válido'));
     }
 
     // Validar dirección
     if (params.address.trim().isEmpty) {
-      return Left(ValidationFailure('La dirección es requerida'));
+      return const Left(ValidationFailure('La dirección es requerida'));
     }
 
     if (params.address.length < 10) {
-      return Left(ValidationFailure('La dirección debe ser más específica'));
+      return const Left(ValidationFailure('La dirección debe ser más específica'));
     }
 
     // Validar website si se proporciona
     if (params.website != null && params.website!.isNotEmpty) {
       if (!_isValidWebsite(params.website!)) {
-        return Left(ValidationFailure('El formato del sitio web no es válido'));
+        return const Left(ValidationFailure('El formato del sitio web no es válido'));
       }
     }
 

@@ -71,9 +71,9 @@ class _HomePageState extends State<HomePage> {
       'title': 'Inventario',
       'subtitle': 'Control de productos',
       'icon': Icons.inventory,
-      'color': AppColors.warning,
+      'color': AppColors.accent,
       'route': '/inventory',
-      'implemented': false,
+      'implemented': true,
     },
   ];
 
@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               // Custom App Bar
               Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -114,12 +114,12 @@ class _HomePageState extends State<HomePage> {
                         
                         // Mostrar loading mientras se cargan los datos
                         if (state is AuthLoading) {
-                          return Row(
+                          return const Row(
                             children: [
                               CircleAvatar(
                                 radius: 25,
                                 backgroundColor: AppColors.white,
-                                child: const SizedBox(
+                                child: SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
@@ -128,8 +128,8 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              const Expanded(
+                              SizedBox(width: 16),
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -217,10 +217,10 @@ class _HomePageState extends State<HomePage> {
                         print('Rendering default state');
                         return Row(
                           children: [
-                            CircleAvatar(
+                            const CircleAvatar(
                               radius: 25,
                               backgroundColor: AppColors.white,
-                              child: const Icon(
+                              child: Icon(
                                 Icons.person,
                                 color: AppColors.primary,
                               ),
@@ -309,13 +309,7 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Módulos del Sistema',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 2),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -425,7 +419,7 @@ class _HomePageState extends State<HomePage> {
                     color: AppColors.warning.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(
+                  child: const Text(
                     'En desarrollo',
                     style: TextStyle(
                       fontSize: 9,

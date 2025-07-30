@@ -13,9 +13,9 @@ class ApiClient {
   ApiClient(this._secureStorage) {
     _dio = Dio(BaseOptions(
       baseUrl: ApiConstants.baseUrl,
-      connectTimeout: Duration(milliseconds: ApiConstants.connectTimeout),
-      receiveTimeout: Duration(milliseconds: ApiConstants.receiveTimeout),
-      sendTimeout: Duration(milliseconds: ApiConstants.sendTimeout),
+      connectTimeout: const Duration(milliseconds: ApiConstants.connectTimeout),
+      receiveTimeout: const Duration(milliseconds: ApiConstants.receiveTimeout),
+      sendTimeout: const Duration(milliseconds: ApiConstants.sendTimeout),
       headers: {
         'Content-Type': ApiConstants.contentType,
       },
@@ -198,7 +198,7 @@ class ApiClient {
         );
       
       case 403:
-        return UnauthorizedException(
+        return const UnauthorizedException(
           'No tiene permisos para realizar esta acción',
           'FORBIDDEN',
         );

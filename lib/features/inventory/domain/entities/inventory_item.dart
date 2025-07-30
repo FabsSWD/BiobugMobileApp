@@ -2,6 +2,8 @@ import 'package:biobug_mobile_app/features/inventory/domain/entities/product.dar
 import 'package:biobug_mobile_app/features/inventory/domain/entities/stock_status.dart';
 import 'package:equatable/equatable.dart';
 
+import 'inventory_alert_priority.dart';
+
 class InventoryItem extends Equatable {
   final String id;
   final String productId;
@@ -73,7 +75,7 @@ class InventoryItem extends Equatable {
     double? minimumStock,
     double? maximumStock,
     String? location,
-    String? batchNumber,
+    final String? batchNumber,
     DateTime? lastUpdated,
     String? lastUpdatedBy,
   }) {
@@ -94,5 +96,32 @@ class InventoryItem extends Equatable {
   @override
   String toString() {
     return 'InventoryItem(id: $id, productId: $productId, currentStock: $currentStock, stockStatus: $stockStatus)';
+  }
+}
+
+extension InventoryItemExtensions on InventoryItem {
+  bool get isOutOfStock => currentStock <= 0;
+  
+  bool get isLowStock => currentStock <= minimumStock && currentStock > 0;
+  
+  bool get isOverStock => currentStock > maximumStock;
+  
+  bool get needsAttention => isOutOfStock || isLowStock || isOverStock || currentStock < 0;
+  
+  InventoryAlertPriority get alertPriorityForStockLevel {
+    if (isOutOfStock || currentStock < 0) {
+      return InventoryAlertPriority.critical;
+    } else if (currentStock <= (minimumStock * 0.5)) {
+      return InventoryAlertPriority.high;
+    } else if (isLowStock) {
+      return InventoryAlertPriority.medium;
+    } else if (isOverStock) {
+      return InventoryAlertPriority.low;
+    }
+    return InventoryAlertPriority.low;
+  }
+  
+  static bool shouldCreateLowStockAlert(InventoryItem item) {
+    return item.currentStock <= item.minimumStock && item.currentStock > 0;
   }
 }

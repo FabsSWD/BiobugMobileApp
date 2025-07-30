@@ -66,7 +66,7 @@ class SignatureGalleryItem extends StatelessWidget {
                     
                     Text(
                       '${signature.width}x${signature.height} • ${signature.formattedFileSize}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.grey600,
                         fontSize: 12,
                       ),
@@ -76,7 +76,7 @@ class SignatureGalleryItem extends StatelessWidget {
                     
                     Text(
                       DateFormatter.getRelativeTime(signature.createdAt),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.grey500,
                         fontSize: 11,
                       ),

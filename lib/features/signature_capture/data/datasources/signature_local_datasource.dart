@@ -69,7 +69,7 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
       final signatureToDelete = signatures.where((s) => s.id == id).firstOrNull;
       
       if (signatureToDelete == null) {
-        throw CacheException('Firma no encontrada');
+        throw const CacheException('Firma no encontrada');
       }
       
       // Delete file if exists
@@ -119,7 +119,7 @@ class SignatureLocalDataSourceImpl implements SignatureLocalDataSource {
     try {
       final file = File(filePath);
       if (!await file.exists()) {
-        throw CacheException('Archivo de firma no encontrado');
+        throw const CacheException('Archivo de firma no encontrado');
       }
       
       return await file.readAsBytes();

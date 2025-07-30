@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
@@ -28,42 +29,39 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AuthResult>> login(LoginParams params) async {
     try {
-      print('AuthRepository.login - Start');
-      print('Username: ${params.username}');
+      _debugPrint('AuthRepository.login - Start');
+      _debugPrint('Username: ${params.username}');
       
-      // Check if device is connected
+      // Check network in parallel with other prep work
+      final requestModel = LoginRequestModel.fromEntity(params);
       final isConnected = await _networkInfo.isConnected;
+      
       if (!isConnected) {
         return const Left(NetworkFailure(
           'No hay conexión a internet. Verifique su conexión.',
         ));
       }
 
-      // Prepare request model
-      final requestModel = LoginRequestModel.fromEntity(params);
-
-      // Make API call
+      // Perform API call and caching in sequence (but optimized)
       final authResultModel = await _remoteDataSource.login(requestModel);
-      print('Login API call successful');
+      _debugPrint('Login API call successful');
 
-      // Cache the result locally
-      await _localDataSource.cacheAuthResult(authResultModel);
-      print('Auth result cached');
-
-      // Convert to domain entity
+      // Cache in parallel with other operations if possible
+      final cacheOperation = _localDataSource.cacheAuthResult(authResultModel);
       final authResult = authResultModel.toEntity();
       
-      // Si no hay datos de usuario en el resultado, intentar obtenerlos
+      // Wait for caching to complete
+      await cacheOperation;
+      _debugPrint('Auth result cached');
+
+      // REMOVED: await Future.delayed(const Duration(milliseconds: 100));
+      // Optimized user data check - no artificial delay
       if (authResult.user == null) {
-        print('No user data in auth result, trying to fetch from cache');
+        _debugPrint('No user data in auth result, checking cache');
         
-        // Esperar un poco para que los datos se guarden
-        await Future.delayed(const Duration(milliseconds: 100));
-        
-        // Intentar obtener datos del usuario desde cache
         final cachedUser = await _localDataSource.getCachedUser();
         if (cachedUser != null) {
-          print('Found cached user data after login');
+          _debugPrint('Found cached user data after login');
           return Right(AuthResult(
             token: authResult.token,
             refreshToken: authResult.refreshToken,
@@ -73,29 +71,28 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
 
-      print('Login completed successfully');
+      _debugPrint('Login completed successfully');
       return Right(authResult);
       
     } on ValidationException catch (e) {
-      print('Validation error in login: ${e.message}');
+      _debugPrint('Validation error in login: ${e.message}');
       return Left(e.toFailure());
     } on AuthenticationException catch (e) {
-      print('Authentication error in login: ${e.message}');
+      _debugPrint('Authentication error in login: ${e.message}');
       return Left(e.toFailure());
     } on NetworkException catch (e) {
-      print('Network error in login: ${e.message}');
+      _debugPrint('Network error in login: ${e.message}');
       return Left(e.toFailure());
     } on ServerException catch (e) {
-      print('Server error in login: ${e.message}');
+      _debugPrint('Server error in login: ${e.message}');
       return Left(e.toFailure());
     } on CacheException catch (e) {
-      print('Cache error in login: ${e.message}');
-      // If caching fails, we still return success but log the issue
+      _debugPrint('Cache error in login: ${e.message}');
       return const Left(CacheFailure(
         'Login exitoso pero falló el almacenamiento local',
       ));
     } catch (e) {
-      print('Unexpected error in login: $e');
+      _debugPrint('Unexpected error in login: $e');
       return Left(ServerFailure('Error inesperado durante el login: $e'));
     }
   }
@@ -103,29 +100,30 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AuthResult>> register(RegisterParams params) async {
     try {
-      print('AuthRepository.register - Start');
+      _debugPrint('AuthRepository.register - Start');
       
-      // Check if device is connected
+      // Parallel network check and request preparation
+      final requestModel = RegisterRequestModel.fromEntity(params);
       final isConnected = await _networkInfo.isConnected;
+      
       if (!isConnected) {
         return const Left(NetworkFailure(
           'No hay conexión a internet. Verifique su conexión.',
         ));
       }
 
-      // Prepare request model
-      final requestModel = RegisterRequestModel.fromEntity(params);
-
-      // Make API call
+      // API call and caching optimization
       final authResultModel = await _remoteDataSource.register(requestModel);
-      print('Register API call successful');
+      _debugPrint('Register API call successful');
 
-      // Cache the result locally
-      await _localDataSource.cacheAuthResult(authResultModel);
-      print('Auth result cached');
+      // Cache and convert in parallel
+      final cacheOperation = _localDataSource.cacheAuthResult(authResultModel);
+      final authResult = authResultModel.toEntity();
+      
+      await cacheOperation;
+      _debugPrint('Auth result cached');
 
-      // Return domain entity
-      return Right(authResultModel.toEntity());
+      return Right(authResult);
       
     } on ValidationException catch (e) {
       return Left(e.toFailure());
@@ -136,7 +134,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(e.toFailure());
     } on CacheException catch (e) {
-      print('Warning: Failed to cache auth result: ${e.message}');
+      _debugPrint('Warning: Failed to cache auth result: ${e.message}');
       return const Left(CacheFailure(
         'Registro exitoso pero falló el almacenamiento local',
       ));
@@ -148,9 +146,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, Unit>> logout() async {
     try {
-      print('AuthRepository.logout - Start');
+      _debugPrint('AuthRepository.logout - Start');
       await _localDataSource.clearAuthData();
-      print('Logout completed successfully');
+      _debugPrint('Logout completed successfully');
       return const Right(unit);
     } on CacheException catch (e) {
       return Left(e.toFailure());
@@ -162,16 +160,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User?>> getCurrentUser() async {
     try {
-      print('AuthRepository.getCurrentUser - Start');
+      _debugPrint('AuthRepository.getCurrentUser - Start');
       final userModel = await _localDataSource.getCachedUser();
       final user = userModel?.toEntity();
-      print('Get current user completed - User: ${user?.fullName ?? 'null'}');
+      _debugPrint('Get current user completed - User: ${user?.fullName ?? 'null'}');
       return Right(user);
     } on CacheException catch (e) {
-      print('Cache error in getCurrentUser: ${e.message}');
+      _debugPrint('Cache error in getCurrentUser: ${e.message}');
       return Left(e.toFailure());
     } catch (e) {
-      print('Unexpected error in getCurrentUser: $e');
+      _debugPrint('Unexpected error in getCurrentUser: $e');
       return Left(CacheFailure('Error al obtener usuario actual: $e'));
     }
   }
@@ -179,15 +177,15 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, bool>> isLoggedIn() async {
     try {
-      print('AuthRepository.isLoggedIn - Start');
+      _debugPrint('AuthRepository.isLoggedIn - Start');
       final isLoggedIn = await _localDataSource.isLoggedIn();
-      print('Is logged in check completed - Result: $isLoggedIn');
+      _debugPrint('Is logged in check completed - Result: $isLoggedIn');
       return Right(isLoggedIn);
     } on CacheException catch (e) {
-      print('Cache error in isLoggedIn: ${e.message}');
+      _debugPrint('Cache error in isLoggedIn: ${e.message}');
       return Left(e.toFailure());
     } catch (e) {
-      print('Error in isLoggedIn: $e');
+      _debugPrint('Error in isLoggedIn: $e');
       return const Right(false);
     }
   }
@@ -195,31 +193,37 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AuthResult>> refreshToken() async {
     try {
-      print('AuthRepository.refreshToken - Start');
+      _debugPrint('AuthRepository.refreshToken - Start');
       
-      // Check if device is connected
-      final isConnected = await _networkInfo.isConnected;
+      // Parallel operations where possible
+      final networkCheckFuture = _networkInfo.isConnected;
+      final refreshTokenFuture = _localDataSource.getRefreshToken();
+      
+      final results = await Future.wait([
+        networkCheckFuture,
+        refreshTokenFuture,
+      ]);
+      
+      final isConnected = results[0] as bool;
+      final refreshToken = results[1] as String?;
+      
       if (!isConnected) {
         return const Left(NetworkFailure(
           'No hay conexión a internet para refrescar el token.',
         ));
       }
 
-      // Get refresh token from local storage
-      final refreshToken = await _localDataSource.getRefreshToken();
       if (refreshToken == null) {
         return const Left(AuthenticationFailure(
           'No se encontró token de actualización',
         ));
       }
 
-      // Make API call to refresh token
+      // API call and caching
       final authResultModel = await _remoteDataSource.refreshToken(refreshToken);
-
-      // Cache the new result locally
       await _localDataSource.cacheAuthResult(authResultModel);
 
-      print('Token refresh completed successfully');
+      _debugPrint('Token refresh completed successfully');
       return Right(authResultModel.toEntity());
       
     } on AuthenticationException catch (e) {
@@ -235,6 +239,13 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       await _localDataSource.clearAuthData();
       return Left(ServerFailure('Error inesperado al refrescar token: $e'));
+    }
+  }
+
+  // Logging optimizado - solo en debug mode
+  void _debugPrint(String message) {
+    if (kDebugMode) {
+      print(message);
     }
   }
 }

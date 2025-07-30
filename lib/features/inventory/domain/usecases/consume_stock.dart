@@ -40,7 +40,7 @@ class ConsumeStock implements UseCase<Unit, ConsumeStockParams> {
         (failure) => Left(failure),
         (inventoryItem) async {
           if (inventoryItem == null) {
-            return Left(ValidationFailure('Producto no encontrado en inventario'));
+            return const Left(ValidationFailure('Producto no encontrado en inventario'));
           }
 
           // Verificar que hay suficiente stock

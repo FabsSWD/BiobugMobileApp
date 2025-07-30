@@ -126,15 +126,15 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
         Container(
           margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: ExpansionTile(
-            title: Row(
+            title: const Row(
               children: [
                 Icon(
                   Icons.info_outline,
                   color: AppColors.info,
                   size: 20,
                 ),
-                const SizedBox(width: 8),
-                const Text(
+                SizedBox(width: 8),
+                Text(
                   'Instrucciones',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
@@ -183,7 +183,7 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
@@ -233,7 +233,7 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
             width: 6,
             height: 6,
             margin: const EdgeInsets.only(top: 6, right: 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.info,
               shape: BoxShape.circle,
             ),
@@ -241,7 +241,7 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.info,
                 height: 1.4,
@@ -281,7 +281,7 @@ class _SignatureCaptureViewState extends State<SignatureCaptureView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Vista Previa',
                       style: TextStyle(
                         fontSize: 18,

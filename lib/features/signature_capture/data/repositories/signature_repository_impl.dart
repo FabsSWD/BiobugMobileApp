@@ -36,14 +36,14 @@ class SignatureRepositoryImpl implements SignatureRepository {
       // Validaciones más flexibles
       if (params.width < AppConstants.signatureMinResolutionWidth ||
           params.height < AppConstants.signatureMinResolutionHeight) {
-        return Left(ValidationFailure(
+        return const Left(ValidationFailure(
           'La resolución mínima debe ser ${AppConstants.signatureMinResolutionWidth}x${AppConstants.signatureMinResolutionHeight} píxeles',
           code: 'INVALID_RESOLUTION',
         ));
       }
 
       if (params.pointsCount < AppConstants.signatureMinPoints) {
-        return Left(ValidationFailure(
+        return const Left(ValidationFailure(
           'La firma debe tener al menos ${AppConstants.signatureMinPoints} puntos',
           code: 'INSUFFICIENT_POINTS',
         ));

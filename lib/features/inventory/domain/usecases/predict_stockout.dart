@@ -49,7 +49,7 @@ class PredictStockout implements UseCase<StockoutPredictionResult, PredictStocko
         (failure) => Left(failure),
         (inventoryItem) async {
           if (inventoryItem == null) {
-            return Left(ValidationFailure('Producto no encontrado en inventario'));
+            return const Left(ValidationFailure('Producto no encontrado en inventario'));
           }
 
           // Obtener movimientos de consumo de los últimos 90 días

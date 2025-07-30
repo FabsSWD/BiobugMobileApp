@@ -1,6 +1,8 @@
 import 'package:biobug_mobile_app/features/inventory/domain/entities/stock_movement_type.dart';
 import 'package:equatable/equatable.dart';
 
+import 'inventory_item.dart';
+
 class StockMovement extends Equatable {
   final String id;
   final String inventoryItemId;
@@ -10,8 +12,8 @@ class StockMovement extends Equatable {
   final double unitCost;
   final double totalCost;
   final String reason;
-  final String? serviceId; // Si el movimiento está relacionado con un servicio
-  final String? reference; // Número de factura, orden, etc.
+  final String? serviceId;
+  final String? reference;
   final String? batchNumber;
   final DateTime createdAt;
   final String createdBy;
@@ -92,5 +94,42 @@ class StockMovement extends Equatable {
   @override
   String toString() {
     return 'StockMovement(id: $id, type: $type, quantity: $quantity, productId: $productId)';
+  }
+}
+
+extension StockMovementExtensions on StockMovement {
+  static bool isValidMovement(StockMovement movement, InventoryItem currentItem) {
+    // Validar que el movimiento no resulte en stock negativo para movimientos de salida
+    if (movement.type == StockMovementType.consumption || 
+        movement.type == StockMovementType.waste ||
+        movement.type == StockMovementType.transfer) {
+      return currentItem.currentStock >= movement.quantity;
+    }
+    
+    // Los movimientos de entrada siempre son válidos en términos de cantidad
+    return true;
+  }
+  
+  static String generateBatchNumber() {
+    final now = DateTime.now();
+    final timestamp = now.millisecondsSinceEpoch;
+    final dateStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    return 'BATCH-$dateStr-${timestamp.toString().substring(timestamp.toString().length - 6)}';
+  }
+  
+  static Map<String, double> calculateConsumptionTrends(List<StockMovement> movements) {
+    final consumptionMovements = movements.where(
+      (m) => m.type == StockMovementType.consumption
+    ).toList();
+
+    // Agrupar por mes
+    final monthlyConsumption = <String, double>{};
+    
+    for (final movement in consumptionMovements) {
+      final monthKey = '${movement.createdAt.year}-${movement.createdAt.month.toString().padLeft(2, '0')}';
+      monthlyConsumption[monthKey] = (monthlyConsumption[monthKey] ?? 0) + movement.quantity;
+    }
+    
+    return monthlyConsumption;
   }
 }
