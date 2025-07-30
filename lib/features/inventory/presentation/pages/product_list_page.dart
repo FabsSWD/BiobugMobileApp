@@ -358,31 +358,34 @@ class _ProductListPageState extends State<ProductListPage> {
   void _showManageStockModal(BuildContext context, product, inventoryItem) {
     showDialog(
       context: context,
-      builder: (context) => ManageStockModal(
-        product: product,
-        inventoryItem: inventoryItem,
-        onStockMovement: (movement) {
-          context.read<StockMovementBloc>().add(CreateStockMovementEvent(movement));
-          final newStock = movement.isIncoming
-              ? inventoryItem.currentStock + movement.quantity
-              : inventoryItem.currentStock - movement.quantity;
-          final updatedItem = inventoryItem.copyWith(
-            currentStock: newStock,
-            lastUpdated: DateTime.now(),
-            lastUpdatedBy: 'user',
-          );
-          context.read<InventoryBloc>().add(UpdateInventoryItem(updatedItem));
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                movement.isIncoming
-                    ? 'Stock agregado exitosamente'
-                    : 'Stock reducido exitosamente',
+      builder: (dialogContext) => BlocProvider.value(  // ← Agregar esto
+        value: context.read<StockMovementBloc>(),       // ← Y esto
+        child: ManageStockModal(
+          product: product,
+          inventoryItem: inventoryItem,
+          onStockMovement: (movement) {
+            context.read<StockMovementBloc>().add(CreateStockMovementEvent(movement));
+            final newStock = movement.isIncoming
+                ? inventoryItem.currentStock + movement.quantity
+                : inventoryItem.currentStock - movement.quantity;
+            final updatedItem = inventoryItem.copyWith(
+              currentStock: newStock,
+              lastUpdated: DateTime.now(),
+              lastUpdatedBy: 'user',
+            );
+            context.read<InventoryBloc>().add(UpdateInventoryItem(updatedItem));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  movement.isIncoming
+                      ? 'Stock agregado exitosamente'
+                      : 'Stock reducido exitosamente',
+                ),
+                backgroundColor: AppColors.success,
               ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
